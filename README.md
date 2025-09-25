@@ -4,7 +4,7 @@
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
-This project develops standaardized tools to use LLMs in research studies for improving patient care.
+This project develops standardized tools to use LLMs in research studies for improving patient care.
 
 Also, RYLAND stands for Research sYstem for LLM-based Analytics of Novel Data. Ryland is a character from Justin's favorite book.
 
