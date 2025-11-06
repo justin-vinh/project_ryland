@@ -1,2 +1,0 @@
-# Relevant data paths
-

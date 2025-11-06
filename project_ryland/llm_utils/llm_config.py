@@ -1,0 +1,31 @@
+"""
+------------------------------------------------------------------------------
+Author:         Justin Vinh
+Collaborators:  Thomas Sounack
+Parent Package: Project Ryland
+Creation Date:  2025.10.13
+Last Modified:  2025.10.13
+
+Purpose:
+Set up info for each model
+------------------------------------------------------------------------------
+"""
+
+# Cost metadata for each model
+llm_model_meta = {
+    'gpt-4o-2024-05-13-api': {
+        'cost_per_1M_token_input': 5.00,
+        'cost_per_1M_token_output': 15.00,
+        'type': 'GPT4DFCI'
+    },
+    'gpt-4o-2024-08-06': {
+        'cost_per_1M_token_input': 2.50,
+        'cost_per_1M_token_output': 10.00,
+        'type': 'OpenAI'
+    },
+    'gpt-4o-mini-2024-07-18-api': {
+        'cost_per_1M_token_input': 0.15,
+        'cost_per_1M_token_output': 0.60,
+        'type': 'GPT4DFCI'
+    }
+}
