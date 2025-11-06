@@ -6,7 +6,9 @@
 
 This project develops standardized tools to use LLMs in research studies for improving patient care.
 
-Also, RYLAND stands for Research sYstem for LLM-based Analytics of Novel Data. Ryland is a character from Justin's favorite book.
+RYLAND stands for Research sYstem for LLM-based Analytics of Novel Data. Ryland is the protagonist of Justin's favorite book (he'll leave it to you to figure out which one)
+
+Ignore the file tree - it needs to be updated.
 
 ## Project Organization
 
