@@ -15,18 +15,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
     
 ]
-dependencies = [
-  "azure_storage"
-  "environ"
-  "numpy"
-  "openai"
-  "orjson"
-  "pandas"
-  "pydantic"
-  "PyYAML"
-  "PyYAML"
-  "tqdm"
-]
 
 requires-python = ">=3.10"
 
