@@ -18,6 +18,37 @@ classifiers = [
 
 requires-python = ">=3.10"
 
+dependencies = [
+    # Core scientific stack
+    "pandas>=2.0",
+    "numpy>=1.26",
+    "matplotlib>=3.9",
+    "scikit-learn>=1.5",
+    "lifelines>=0.28",
+    "tqdm>=4.66",
+
+    # Logging and utilities
+    "loguru>=0.7",
+    "orjson>=3.10",
+
+    # Configuration / environment parsing
+    "pyyaml>=6.0",
+    "environs>=9.5",
+
+    # Azure + OpenAI integration
+    "openai>=1.43",
+    "azure-identity>=1.17",
+    "azure-core>=1.30",
+
+    # Data validation / models
+    "pydantic>=2.6",
+
+    # Type hints, date parsing, etc.
+    "python-dateutil>=2.9",
+
+    # Optional: useful helpers
+    "requests>=2.31",
+]
 
 [tool.ruff]
 line-length = 99

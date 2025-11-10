@@ -10,10 +10,9 @@ Contains functions to import/output data and do basic cleaning
 ------------------------------------------------------------------------------
 """
 
-import json
-import orjson
 from pathlib import Path
 
+import orjson
 import pandas as pd
 
 
