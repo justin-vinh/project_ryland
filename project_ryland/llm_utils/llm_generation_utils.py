@@ -215,10 +215,9 @@ class LLM_wrapper:
                 DefaultAzureCredential(),
                 ENTRA_SCOPE
             )
-            self.client = AzureOpenAI(
-                api_version=api_version,
-                azure_endpoint=ENDPOINT,
-                azure_ad_token_provider=token_provider
+            self.client = OpenAI(
+                base_url=ENDPOINT,
+                api_key=token_provider,
             )
         elif API_KEY:
             # Detected standard OpenAI environment
@@ -271,30 +270,16 @@ class LLM_wrapper:
     def openai_chat_completion_response(self, prompt: str, input_text: str,
                                         format_class, cost_tracker: LLMCostTracker):
         """Call the Azure OpenAI API with structured response parsing"""
-
-        # ---OLD WAY: SOON TO BE DEPRECIATED FOR GPT4DFCI---
         try:
-            schema = [openai.pydantic_function_tool(format_class)]
-            schema_clean = self.remove_strict_field(schema)
-            function_name = self.extract_name_value(schema_clean)
-
-            # Allow only 3 retries in calling the API
-            for attempt in range(3):
-                completion = self.client.chat.completions.create(
-                    model=self.model_name,
-                    temperature=0.0,
-                    messages=[
-                        {'role': 'system', 'content': prompt},
-                        {'role': 'user', 'content': input_text}
-                    ],
-                    tools=schema,
-                    tool_choice={'type':'function',
-                                 'function': {'name': function_name}}
-                )
-                if completion:
-                    response = completion.choices[0].message.tool_calls[
-                        0].function.arguments
-                    return [json.loads(response), completion]
+            completion = self.client.beta.chat.completions.parse(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": input_text}
+                ],
+                response_format=format_class,
+            )
+            return completion.choices[0].message.parsed
 
         # Handle various errors
         except openai.APIError as e:
