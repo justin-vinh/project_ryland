@@ -205,7 +205,7 @@ class LLMCostTracker:
 
 
 class LLM_wrapper:
-    def __init__(self, model_name: str, api_version: str):
+    def __init__(self, model_name: str):
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
         if ENDPOINT and ENTRA_SCOPE:
