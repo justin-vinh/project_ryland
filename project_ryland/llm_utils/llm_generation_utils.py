@@ -268,18 +268,31 @@ class LLM_wrapper:
     # Set up the API interaction
     # -------------------------------------------------------------------------
     def openai_chat_completion_response(self, prompt: str, input_text: str,
-                                        format_class, cost_tracker: LLMCostTracker):
+                                        format_class, cost_tracker:
+            LLMCostTracker):
         """Call the Azure OpenAI API with structured response parsing"""
         try:
-            completion = self.client.beta.chat.completions.parse(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": input_text}
-                ],
-                response_format=format_class,
-            )
-            return completion.choices[0].message.parsed
+            # if statement allows specifying the temperature if not gpt-5
+            if "gpt-5" in self.model_name:
+                completion = self.client.beta.chat.completions.parse(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": input_text}
+                    ],
+                    response_format=format_class,
+                )
+            else:
+                completion = self.client.beta.chat.completions.parse(
+                    model=self.model_name,
+                    temperature=0.0,
+                    messages=[
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": input_text}
+                    ],
+                    response_format=format_class,
+                )
+            return completion.choices[0].message.parsed, completion
 
         # Handle various errors
         except openai.APIError as e:

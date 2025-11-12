@@ -14,7 +14,8 @@ Purpose: Provides output structures to various prompts
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
 
 class NANO_Scale_Score_Three(int, Enum):
     score_0 = 0
@@ -37,10 +38,6 @@ class AssessNANO(BaseModel):
     Language: Optional[NANO_Scale_Score_Three]
     Level_of_Consciousness: Optional[NANO_Scale_Score_Three]
     Behavior: Optional[NANO_Scale_Score_Two]
-
-from typing import Optional
-from pydantic import BaseModel, Field
-
 
 class AssessNanoImaging(BaseModel):
     """
@@ -67,7 +64,6 @@ class AssessNanoImaging(BaseModel):
         description="True if deep vein thrombosis (DVT) is mentioned or diagnosed, "
                     "False if explicitly ruled out, None if not mentioned."
     )
-
 
 class AssessNanoPathology(BaseModel):
     """
@@ -98,3 +94,5 @@ class AssessNanoPathology(BaseModel):
         description="MGMT promoter methylation status "
                     "(e.g., 'methylated', 'unmethylated', 'not assessed')."
     )
+
+
