@@ -244,7 +244,7 @@ def explode_extracted_text(df,
 # -----------------------------------------------------------------------------
 def extract_kps (text_col):
     """Extract KPS scores if mentioned in the progress note text"""
-    match = re.search(r'KPS[:=\s\n]*([0-9]{1,3})',
+    match = re.search(r'(?:KPS(?:\s*score)?)[\s:=\-]*([0-9]{1,3})',
                       str(text_col),
                       flags=re.IGNORECASE)
     if match:
