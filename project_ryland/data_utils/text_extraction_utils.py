@@ -243,10 +243,32 @@ def explode_extracted_text(df,
 # MISC TEXT EXTRACTION UTILS
 # -----------------------------------------------------------------------------
 def extract_kps (text_col):
-    """Extract KPS scores if mentioned in the progress note text"""
-    match = re.search(r'(?:KPS(?:\s*score)?)[\s:=\-]*([0-9]{1,3})',
-                      str(text_col),
-                      flags=re.IGNORECASE)
-    if match:
-        return int(match.group(1))
+    """
+    Extract the KPS score from text, handling cases like:
+    - 'KPS: 90'
+    - 'KPS/ECOG: 90/0'
+    - 'KPS/ECOG 100/1'
+    - 'KPS score = 80'
+    """
+
+    text = str(text_col)
+
+    # 1. Handle the combined "KPS/ECOG: 90/0" case first
+    match_combo = re.search(
+        r'KPS\s*/\s*ECOG\s*[:=\-]?\s*([0-9]{1,3})',
+        text,
+        flags=re.IGNORECASE
+    )
+    if match_combo:
+        return int(match_combo.group(1))
+
+    # 2. General KPS extractor
+    match_general = re.search(
+        r'(?:KPS(?:\s*score)?)\s*[:=\- ]*\s*([0-9]{1,3})',
+        text,
+        flags=re.IGNORECASE
+    )
+    if match_general:
+        return int(match_general.group(1))
+
     return None
