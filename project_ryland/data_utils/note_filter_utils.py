@@ -40,7 +40,7 @@ def ensure_naive_datetime(obj):
 def prep_treatment_data(
         df_tx: pd.DataFrame,
         df_info: pd.DataFrame,
-        tx_keywords: List[str]) -> pd.DataFrame:
+        tx_keywords: List[str] = []) -> pd.DataFrame:
     """
     1) Merge the treatment data with demographics data (mainly for death info)
     2) clean the resultant df
@@ -59,12 +59,13 @@ def prep_treatment_data(
     df_tx_demo = df_tx_demo.dropna(subset=['TREATMENT'])
 
     # Filter the df for the treatments of interest (case-insensitive)
-    mask = df_tx_demo['TREATMENT'].str.lower().apply(
-        lambda x: any(tx.lower() in x for tx in tx_keywords)
-    )
-    df_tx_filt = df_tx_demo[mask].reset_index(drop=True)
+    if tx_keywords:
+        mask = df_tx_demo['TREATMENT'].str.lower().apply(
+            lambda x: any(tx.lower() in x for tx in tx_keywords)
+        )
+        df_tx_demo = df_tx_demo[mask].reset_index(drop=True)
 
-    return df_tx_filt
+    return df_tx_demo
 
 
 def prep_notes(
