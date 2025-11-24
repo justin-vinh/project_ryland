@@ -273,10 +273,20 @@ class LLM_wrapper:
 
     # Set up the API interaction
     # -------------------------------------------------------------------------
-    def openai_chat_completion_response(self, prompt: str, input_text: str,
-                                        format_class, cost_tracker:
-            LLMCostTracker):
+    def openai_chat_completion_response(
+        self,
+        prompt: str,
+        input_text: str,
+        format_class,
+        cost_tracker: LLMCostTracker):
         """Call the Azure OpenAI API with structured response parsing"""
+
+        params = {
+            'model': self.model_name,
+            'messages': [{"role": "system", "content": prompt},
+                        {"role": "user", "content": input_text}]
+    }
+
         try:
             # if statement allows specifying the temperature if not gpt-5
             if "gpt-5" in self.model_name:
@@ -346,7 +356,6 @@ class LLM_wrapper:
     #             flat[key] = value
     #     return pd.Series(flat)
 
-    @ staticmethod
     def flatten_data(self, data: dict) -> pd.Series:
         """
         Recursively flatten nested dicts (or Pydantic objects converted to dicts)
