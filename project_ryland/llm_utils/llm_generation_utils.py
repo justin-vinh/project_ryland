@@ -515,6 +515,11 @@ class LLM_wrapper:
                     print(f"Flattening error: {e}")
                     return pd.Series()
 
+            flattened_df = df["generation"].apply(_safe_flatten)
+            new_cols = [c for c in flattened_df.columns if c not in df.columns]
+            if new_cols:
+                df = pd.concat([df, flattened_df[new_cols]], axis=1)
+
         # Save the final LLM output
         df.to_csv(final_output_path, index=False)
 
