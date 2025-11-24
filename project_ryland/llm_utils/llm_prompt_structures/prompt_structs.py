@@ -14,7 +14,9 @@ Purpose: Provides output structures to various prompts
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model
+
+from project_ryland.data_utils.keyword_mappings import gwas_prompt_variables_v1
 
 
 class NANO_Scale_Score_Three(int, Enum):
@@ -96,3 +98,31 @@ class AssessNanoPathology(BaseModel):
     )
 
 
+
+class AssessSymptomDetail(BaseModel):
+    """
+    Structured schema for extracting symptom info from progress notes
+    """
+    status: str = Field(
+        None,
+        description="The status of a symptom based on the progress note. "
+                    "The status must be 'Affirmed', 'Negated', or 'Absent'"
+    )
+    text: str = Field(
+        None,
+        description="Exact text span from the pathology report that supports the "
+                    "assigned status for the symptom."
+    )
+
+
+symptom_list = gwas_prompt_variables_v1['symptoms']
+
+fields = {
+    symptom.replace(' ', '_'): (AssessSymptomDetail, ...)
+    for symptom in symptom_list
+}
+
+AssessSymptoms = create_model(
+    'AssessSymptoms',
+    **fields
+)

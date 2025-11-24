@@ -6,36 +6,8 @@ review.
 - For each symptom, determine the status, provide supporting text, and the starting and ending character index.
 
 **Output Format**:
-Return a JSON object where each key is a symptom from the list, and the value is a JSON object containing:
 - "status": One of "Affirmed", "Negated", or "Absent".
-- "text": If the status is "Affirmed" or "Negated", include a supporting text snippet from the clinical note. This is required.
-- "start_char": Starting character of the identified text.
-- "end_char": Ending character of the identified text.
-
-**Example Output:**
-{
-    "Fatigue": {
-        "status": "Affirmed",
-        "text": "Patient reports feeling unusually tired over the past few days.",
-        "start_char": 400,
-        "end_char": 463
-    },
-    "Nausea": {
-        "status": "Negated",
-        "text": "Denies nausea or vomiting.",
-        "start_char": 500,
-        "end_char": 526
-    },
-    "Headache": {
-        "status": "Absent"
-    },
-    "Other": {
-        "status": "Affirmed",
-        "text": "Patient mentions experiencing dizziness.",
-        "start_char": 300,
-        "end_char": 340
-    }
-}
+- "text": If the status is "Affirmed" or "Negated", include a supporting text snippet from the clinical note.
 
 A symptom is considered:
 - **Negated** if it is explicitly mentioned that the patient is not experiencing it.

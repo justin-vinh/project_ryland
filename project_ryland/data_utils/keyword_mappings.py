@@ -33,7 +33,6 @@ gwas_prompt_variables_v1 = {
 }
 
 
-
 # Input text keywords
 progress_note_text_filters = ['CENTER FOR NEURO-ONCOLOGY',
                               'NEURO-ONCOLOGY PROGRESS NOTE',
