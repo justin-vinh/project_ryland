@@ -62,6 +62,7 @@ sys.path.append('../')
 ENDPOINT = env.str('ENDPOINT', None)
 ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
 API_KEY = env.str("API_TEST_KEY", None)
+API_TYPE = None
 
 
 def retrieve_llm_prompt(prompt_name: str) -> Dict[str, str]:
@@ -211,6 +212,7 @@ class LLM_wrapper:
         if ENDPOINT and ENTRA_SCOPE:
             # Detected Azure (GPT4DFCI) environment
             print(f'[INFO] Detected Azure OpenAI (GPT4DFCI) configuration')
+            API_TYPE = "AZURE"
             token_provider = get_bearer_token_provider(
                 DefaultAzureCredential(),
                 ENTRA_SCOPE
@@ -222,6 +224,7 @@ class LLM_wrapper:
         elif API_KEY:
             # Detected standard OpenAI environment
             print(f'[INFO] Detected standard OpenAI configuration')
+            API_TYPE = 'OPENAI'
             self.client = OpenAI(api_key=API_KEY)
         else:
             raise EnvironmentError(
@@ -231,6 +234,9 @@ class LLM_wrapper:
             )
 
         self.model_name = model_name
+
+        # TODO: add a new self delcaration to set the endpoint state to either Azure or OpenAI
+
 
     # Set up utility functions
     # -------------------------------------------------------------------------
@@ -328,17 +334,37 @@ class LLM_wrapper:
             return df.head(100)
         return df
 
+    # @ staticmethod
+    # def flatten_data(data: Dict[str, Any]) -> pd.Series:
+    #     """Recursively flatten dict data"""
+    #     flat = {}
+    #     for key, value in data.items():
+    #         if isinstance(value, dict):
+    #             flat[f'{key}_documentation_llm'] = value.get('documentation', None)
+    #             flat[f'{key}_text_llm'] = value.get('text', None)
+    #         else:
+    #             flat[key] = value
+    #     return pd.Series(flat)
+
     @ staticmethod
-    def flatten_data(data: Dict[str, Any]) -> pd.Series:
-        """Recursively flatten dict data"""
-        flat = {}
-        for key, value in data.items():
+    def flatten_data(self, data: dict) -> pd.Series:
+        """
+        Recursively flatten nested dicts (or Pydantic objects converted to dicts)
+        """
+        flattened_data = {}
+
+        def _flatten(prefix, value):
             if isinstance(value, dict):
-                flat[f'{key}_documentation_llm'] = value.get('documentation', None)
-                flat[f'{key}_text_llm'] = value.get('text', None)
+                for k, v in value.items():
+                    _flatten(f"{prefix}_{k}" if prefix else k, v)
+            elif isinstance(value, list):
+                # Flatten lists by JSON-stringifying
+                flattened_data[prefix] = json.dumps(value)
             else:
-                flat[key] = value
-        return pd.Series(flat)
+                flattened_data[prefix] = value
+
+        _flatten("", data)
+        return pd.Series(flattened_data)
 
     # Set up data processing pipeline
     # -------------------------------------------------------------------------
@@ -460,13 +486,26 @@ class LLM_wrapper:
         logging.info(f'[INFO] Cost: {cost_tracker.update_cost(completion)}')
 
         # Flatten once at end
+        # if flatten:
+        #     flattened_df = df['generation'].apply(
+        #         lambda x: self.flatten_data(x)
+        #         if isinstance(x, dict)
+        #         else pd.Series()
+        #     )
+        #     df = pd.concat([df, flattened_df], axis=1)
+
         if flatten:
-            flattened_df = df['generation'].apply(
-                lambda x: self.flatten_data(x)
-                if isinstance(x, dict)
-                else pd.Series()
-            )
-            df = pd.concat([df, flattened_df], axis=1)
+            def _safe_flatten(x):
+                if pd.isna(x) or x in ("None", "nan"):
+                    return pd.Series()
+                try:
+                    # Convert stringified JSON back to dict
+                    if isinstance(x, str):
+                        x = json.loads(x)
+                    return self.flatten_data(x)
+                except Exception as e:
+                    print(f"Flattening error: {e}")
+                    return pd.Series()
 
         # Save the final LLM output
         df.to_csv(final_output_path, index=False)

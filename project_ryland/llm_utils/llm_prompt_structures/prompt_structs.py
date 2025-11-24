@@ -98,7 +98,8 @@ class AssessNanoPathology(BaseModel):
     )
 
 
-
+# Prompt Structure for GWAS symptom assessment
+# ----------------------------------------------------------------------------
 class AssessSymptomDetail(BaseModel):
     """
     Structured schema for extracting symptom info from progress notes
@@ -126,3 +127,5 @@ AssessSymptoms = create_model(
     'AssessSymptoms',
     **fields
 )
+
+# ----------------------------------------------------------------------------
