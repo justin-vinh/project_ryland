@@ -465,7 +465,15 @@ class LLM_wrapper:
                     input_text,
                     format_class,
                     cost_tracker)
-                df.at[idx, 'generation'] = response
+                # df.at[idx, 'generation'] = response
+
+                if hasattr(response, "model_dump"):  # Pydantic v2
+                    df.at[idx, "generation"] = json.dumps(response.model_dump())
+                elif hasattr(response, "dict"):  # Pydantic v1
+                    df.at[idx, "generation"] = json.dumps(response.dict())
+                else:
+                    df.at[idx, "generation"] = json.dumps(response)
+
                 # Add the costs to the progress bar
                 bar.set_postfix(cost_tracker.update_cost(completion))
 
