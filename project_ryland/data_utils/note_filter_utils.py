@@ -12,10 +12,11 @@ for LLM analysis.
 ------------------------------------------------------------------------------
 """
 
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+from zope.interface.common import optional
 
 
 def ensure_naive_datetime(obj):
@@ -39,16 +40,20 @@ def ensure_naive_datetime(obj):
 # -----------------------------------------------------------------------------
 def prep_treatment_data(
         df_tx: pd.DataFrame,
-        df_info: pd.DataFrame,
+        df_info: Optional[pd.DataFrame] = None,
         tx_keywords: List[str] = []) -> pd.DataFrame:
     """
-    1) Merge the treatment data with demographics data (mainly for death info)
+    1) Merge the treatment data with demographics data (mainly for death
+    info) - this is optional
     2) clean the resultant df
     3) filter the df by 1+ treatment types
     """
 
-    # Merge treatment with demographics data
-    df_tx_demo = pd.merge(df_tx, df_info, on='DFCI_MRN', how='left')
+    if df_info is not None:
+        # Merge treatment with demographics data
+        df_tx_demo = pd.merge(df_tx, df_info, on='DFCI_MRN', how='left')
+    else:
+        df_tx_demo = df_tx.copy()
 
     # Collapse the different treatment columns into one representative tx col
     # backfills with tx to the right if there is an NA
