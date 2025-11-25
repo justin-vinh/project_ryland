@@ -117,12 +117,10 @@ class AssessSymptomDetail(BaseModel):
 
 
 symptom_list = gwas_prompt_variables_v1['symptoms']
-
 fields = {
     symptom.replace(' ', '_'): (AssessSymptomDetail, ...)
     for symptom in symptom_list
 }
-
 AssessSymptoms = create_model(
     'AssessSymptoms',
     **fields

@@ -4,7 +4,7 @@ Author:         Justin Vinh
 Collaborators:  Thomas Sounack
 Parent Package: Project Ryland
 Creation Date:  2025.10.06
-Last Modified:  2025.10.13
+Last Modified:  2025.11.24
 
 Purpose:
 Contain the functions necessary to pull the proper LLM prompt and
@@ -28,6 +28,7 @@ import yaml
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from environs import Env
 from openai import AzureOpenAI, OpenAI
+from pyarrow.types import schema
 from pydantic import ValidationError
 from tqdm import tqdm
 
@@ -62,7 +63,6 @@ sys.path.append('../')
 ENDPOINT = env.str('ENDPOINT', None)
 ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
 API_KEY = env.str("API_TEST_KEY", None)
-API_TYPE = None
 
 
 def retrieve_llm_prompt(prompt_name: str) -> Dict[str, str]:
@@ -209,10 +209,13 @@ class LLM_wrapper:
     def __init__(self, model_name: str):
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
+
+        self.API_TYPE = None
+
         if ENDPOINT and ENTRA_SCOPE:
             # Detected Azure (GPT4DFCI) environment
             print(f'[INFO] Detected Azure OpenAI (GPT4DFCI) configuration')
-            API_TYPE = "AZURE"
+            self.API_TYPE = "AZURE"
             token_provider = get_bearer_token_provider(
                 DefaultAzureCredential(),
                 ENTRA_SCOPE
@@ -224,7 +227,7 @@ class LLM_wrapper:
         elif API_KEY:
             # Detected standard OpenAI environment
             print(f'[INFO] Detected standard OpenAI configuration')
-            API_TYPE = 'OPENAI'
+            self.API_TYPE = 'OPENAI'
             self.client = OpenAI(api_key=API_KEY)
         else:
             raise EnvironmentError(
@@ -234,9 +237,6 @@ class LLM_wrapper:
             )
 
         self.model_name = model_name
-
-        # TODO: add a new self delcaration to set the endpoint state to either Azure or OpenAI
-
 
     # Set up utility functions
     # -------------------------------------------------------------------------
@@ -281,34 +281,49 @@ class LLM_wrapper:
         cost_tracker: LLMCostTracker):
         """Call the Azure OpenAI API with structured response parsing"""
 
-        params = {
+        # Sets up a parameter set for the chat completion response
+        # Will add to this set based on API type or model type
+        chat_response_params = {
             'model': self.model_name,
             'messages': [{"role": "system", "content": prompt},
-                        {"role": "user", "content": input_text}]
-    }
+                        {"role": "user", "content": input_text}],
+        }
+
+        # Sets the temperature to 0 if any model other than gpt-5
+        if 'gpt-5' not in self.model_name:
+            chat_response_params['temperature'] = 0.0
 
         try:
-            # if statement allows specifying the temperature if not gpt-5
-            if "gpt-5" in self.model_name:
+            # Uses the chat response pathway for the new DFCI Azure API
+            if self.API_TYPE == 'AZURE':
+                chat_response_params['response_format'] = format_class
                 completion = self.client.beta.chat.completions.parse(
-                    model=self.model_name,
-                    messages=[
-                        {"role": "system", "content": prompt},
-                        {"role": "user", "content": input_text}
-                    ],
-                    response_format=format_class,
+                    **chat_response_params
                 )
-            else:
-                completion = self.client.beta.chat.completions.parse(
-                    model=self.model_name,
-                    temperature=0.0,
-                    messages=[
-                        {"role": "system", "content": prompt},
-                        {"role": "user", "content": input_text}
-                    ],
-                    response_format=format_class,
-                )
-            return completion.choices[0].message.parsed, completion
+                return completion.choices[0].message.parsed, completion
+
+            # Uses the chat response pathway for the public OpenAI API
+            elif self.API_TYPE == 'OPENAI':
+                schema = [openai.pydantic_function_tool(format_class)]
+                schema_clean = self.remove_strict_field(schema)
+                function_name = self.extract_name_value(schema_clean)
+
+                chat_response_params['tools'] = schema
+                chat_response_params['tool_choice'] = {
+                    'type': 'function',
+                    'function': {'name': function_name}
+                }
+
+                # Allow only 3 retries in calling the API
+                for attempt in range(3):
+                    completion = self.client.chat.completions.create(
+                        **chat_response_params
+                    )
+                    if completion:
+                        response = (completion.choices[0]
+                                    .message.tool_calls[0]
+                                    .function.arguments)
+                        return [json.loads(response), completion]
 
         # Handle various errors
         except openai.APIError as e:
@@ -344,17 +359,17 @@ class LLM_wrapper:
             return df.head(100)
         return df
 
-    # @ staticmethod
-    # def flatten_data(data: Dict[str, Any]) -> pd.Series:
-    #     """Recursively flatten dict data"""
-    #     flat = {}
-    #     for key, value in data.items():
-    #         if isinstance(value, dict):
-    #             flat[f'{key}_documentation_llm'] = value.get('documentation', None)
-    #             flat[f'{key}_text_llm'] = value.get('text', None)
-    #         else:
-    #             flat[key] = value
-    #     return pd.Series(flat)
+    @ staticmethod
+    def flatten_data_old(data: Dict[str, Any]) -> pd.Series:
+        """Recursively flatten dict data"""
+        flat = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                flat[f'{key}_documentation_llm'] = value.get('documentation', None)
+                flat[f'{key}_text_llm'] = value.get('text', None)
+            else:
+                flat[key] = value
+        return pd.Series(flat)
 
     def flatten_data(self, data: dict) -> pd.Series:
         """
@@ -502,32 +517,35 @@ class LLM_wrapper:
         # Log the final cost of LLM generation in the log file
         logging.info(f'[INFO] Cost: {cost_tracker.update_cost(completion)}')
 
-        # Flatten once at end
-        # if flatten:
-        #     flattened_df = df['generation'].apply(
-        #         lambda x: self.flatten_data(x)
-        #         if isinstance(x, dict)
-        #         else pd.Series()
-        #     )
-        #     df = pd.concat([df, flattened_df], axis=1)
-
+        # Flatten the output generation data if desired
         if flatten:
-            def _safe_flatten(x):
-                if pd.isna(x) or x in ("None", "nan"):
-                    return pd.Series()
-                try:
-                    # Convert stringified JSON back to dict
-                    if isinstance(x, str):
-                        x = json.loads(x)
-                    return self.flatten_data(x)
-                except Exception as e:
-                    print(f"Flattening error: {e}")
-                    return pd.Series()
+            if self.API_TYPE == 'OPENAI':
+                # Flatten once at end
+                flattened_df = df['generation'].apply(
+                    lambda x: self.flatten_data_old(x)
+                    if isinstance(x, dict)
+                    else pd.Series()
+                )
+                df = pd.concat([df, flattened_df], axis=1)
 
-            flattened_df = df["generation"].apply(_safe_flatten)
-            new_cols = [c for c in flattened_df.columns if c not in df.columns]
-            if new_cols:
-                df = pd.concat([df, flattened_df[new_cols]], axis=1)
+            elif self.API_TYPE == 'AZURE':
+                def _safe_flatten(x):
+                    if pd.isna(x) or x in ("None", "nan"):
+                        return pd.Series()
+                    try:
+                        # Convert stringified JSON back to dict
+                        if isinstance(x, str):
+                            x = json.loads(x)
+                        return self.flatten_data(x)
+                    except Exception as e:
+                        print(f"Flattening error: {e}")
+                        return pd.Series()
+
+                # Flatten once at end
+                flattened_df = df["generation"].apply(_safe_flatten)
+                new_cols = [c for c in flattened_df.columns if c not in df.columns]
+                if new_cols:
+                    df = pd.concat([df, flattened_df[new_cols]], axis=1)
 
         # Save the final LLM output
         df.to_csv(final_output_path, index=False)

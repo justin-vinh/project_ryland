@@ -28,6 +28,11 @@ llm_model_meta = {
         'cost_per_1M_token_output': 0.60,
         'type': 'GPT4DFCI'
     },
+    'gpt-4o': {
+        'cost_per_1M_token_input': 2.50,
+        'cost_per_1M_token_output': 10.00,
+        'type': 'GPT4DFCI'
+    },
     'gpt-5': {
         'cost_per_1M_token_input': 1.25,
         'cost_per_1M_token_output': 10.00,
