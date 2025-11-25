@@ -4,10 +4,10 @@ Author:         Justin Vinh
 Collaborators:  Thomas Sounack
 Parent Package: Project Ryland
 Creation Date:  2025.10.13
-Last Modified:  2025.10.13
+Last Modified:  2025.11.25
 
 Purpose:
-Set up info for each model
+Set up cost info for each model
 ------------------------------------------------------------------------------
 """
 

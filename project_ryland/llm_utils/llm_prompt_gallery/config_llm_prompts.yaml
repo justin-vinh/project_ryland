@@ -8,6 +8,7 @@
 # ----------------------------------------------------------------------------
 
 # NANO Project Prompts
+# ----------------------------------------------------------------------------
 nano_prompt_progress_notes_v1:
   filename: nano_prompt_progress_notes_v1.txt
   description: |
@@ -46,7 +47,9 @@ nano_prompt_pathology_v2:
   author: Justin Vinh
   date: 2025.10.14
 
+
 # GWAS Project Prompts
+# ----------------------------------------------------------------------------
 gwas_symptoms_prompt_v1:
   filename: gwas_symptoms_prompt_v1.txt
   description: |
