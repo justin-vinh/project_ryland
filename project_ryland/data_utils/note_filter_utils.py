@@ -16,7 +16,6 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from zope.interface.common import optional
 
 
 def ensure_naive_datetime(obj):
