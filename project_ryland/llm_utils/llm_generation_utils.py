@@ -28,7 +28,6 @@ import yaml
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from environs import Env
 from openai import AzureOpenAI, OpenAI
-from pyarrow.types import schema
 from pydantic import ValidationError
 from tqdm import tqdm
 
