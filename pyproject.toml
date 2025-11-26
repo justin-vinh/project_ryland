@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "project_ryland"
-version = "1.3.2"
+version = "1.3.3"
 description = "This project develops standaardized tools to use LLMs in research studies for improving patient care."
 authors = [
   { name = "Justin Vinh" },

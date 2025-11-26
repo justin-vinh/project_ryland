@@ -149,7 +149,10 @@ def retrieve_llm_prompt_with_inserted_variables(
         }
         prompt['prompt_text'] = prompt['prompt_text'].format(**user_prompt_vars_clean)
         print(f'[INFO] Prompt successfully retrieved + '
-              f'placeholder variables replaced by user-defined values\n')
+              f'placeholder variables replaced by user-defined values:')
+        for k, v in user_prompt_vars_clean.items():
+            print(f'[INFO] Placeholder:\t\t\t{k} \n[INFO] User value(s):\t\t{v}')
+        print('')
     else:
         print(f'[INFO] Prompt successfully retrieved\n')
 
