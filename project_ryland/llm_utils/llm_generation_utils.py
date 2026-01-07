@@ -369,7 +369,7 @@ class LLM_wrapper:
             raise ValueError(f"Missing required col {text_column} in input file")
 
         if sample_mode:
-            return df.head(100)
+            return df.head(20)
         return df
 
     @ staticmethod
