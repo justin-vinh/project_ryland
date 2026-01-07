@@ -199,7 +199,7 @@ class LLMCostTracker:
 
 
 class LLM_wrapper:
-    def __init__(self, model_name: str, env_abs_path: str):
+    def __init__(self, model_name: str, env_abs_path: str = None):
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
 
@@ -208,7 +208,13 @@ class LLM_wrapper:
         try:
             env.read_env()
         except OSError:
-            env.read_env(env_abs_path)
+            if env_abs_path is not None and env_abs_path.exists():
+                env.read_env(env_abs_path)
+                print("Loaded .env from", env_abs_path)
+            elif env_abs_path is None:
+                print('No .env file found. Please specify an absolute path')
+            else:
+                print("No .env file found at", env_abs_path)
         sys.path.append('../')
 
         # Detects which variables are present depending on whether the public OpenAI API
