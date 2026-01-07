@@ -2,6 +2,8 @@
 ------------------------------------------------------------------------------
 Author:         Justin Vinh
 Collaborators:  Thomas Sounack
+Institution:    Dana-Farber Cancer Institute
+Working Groups: Lindvall & Rhee Labs
 Parent Package: Project Ryland
 Creation Date:  2025.10.06
 Last Modified:  2025.11.24
@@ -51,17 +53,6 @@ logger.addHandler(file_handler)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 # --- Configure logging ---
-
-# Set up environment
-env = Env()
-env.read_env()
-sys.path.append('../')
-
-# Detects which variables are present depending on whether the public OpenAI API
-# or the GPT4DFCI key is being used based on the .env file
-ENDPOINT = env.str('ENDPOINT', None)
-ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
-API_KEY = env.str("API_TEST_KEY", None)
 
 
 def retrieve_llm_prompt(prompt_name: str) -> Dict[str, str]:
@@ -208,9 +199,23 @@ class LLMCostTracker:
 
 
 class LLM_wrapper:
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, env_abs_path: str):
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
+
+        # Set up environment
+        env = Env()
+        try:
+            env.read_env()
+        except OSError:
+            env.read_env(env_abs_path)
+        sys.path.append('../')
+
+        # Detects which variables are present depending on whether the public OpenAI API
+        # or the GPT4DFCI key is being used based on the .env file
+        ENDPOINT = env.str('ENDPOINT', None)
+        ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
+        API_KEY = env.str("API_TEST_KEY", None)
 
         self.API_TYPE = None
 
@@ -291,7 +296,7 @@ class LLM_wrapper:
                         {"role": "user", "content": input_text}],
         }
 
-        # Sets the temperature to 0 if any model other than gpt-5
+        # Sets the temperature to 0 if using any model other than gpt-5
         if 'gpt-5' not in self.model_name:
             chat_response_params['temperature'] = 0.0
 
@@ -363,7 +368,10 @@ class LLM_wrapper:
 
     @ staticmethod
     def flatten_data_old(data: Dict[str, Any]) -> pd.Series:
-        """Recursively flatten dict data"""
+        """
+        Recursively flatten dict data. This is the old version of the function and
+        remains for legacy purposes
+        """
         flat = {}
         for key, value in data.items():
             if isinstance(value, dict):
@@ -409,9 +417,7 @@ class LLM_wrapper:
         resume: bool = True
     ):
         """
-        Process text data with the LLM and auto-generates unqiue output filenames.
-
-        Ex output file:
+        Process text data with the LLM and auto-generates unique output filenames.
         """
         # Log start of run
         logging.info('[INFO] New LLM generation run starting...')
