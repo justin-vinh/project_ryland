@@ -7,7 +7,7 @@ name = "project_ryland"
 version = "1.3.8"
 description = "This project develops standardized tools to use LLMs in research studies for improving patient care."
 authors = [
-  { name = "Justin Vinh" },
+  {name = "Justin Vinh", email = "jvinh21@gmail.com"}
 ]
 
 readme = "README.md"
@@ -52,7 +52,7 @@ dependencies = [
 
 [tool.ruff]
 line-length = 99
-src = ["project_ryland_code"]
+src = ["project_ryland"]
 include = ["pyproject.toml", "project_ryland_code/**/*.py"]
 
 [tool.ruff.lint]
