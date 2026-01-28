@@ -199,35 +199,41 @@ class LLMCostTracker:
 
 
 class LLM_wrapper:
-    def __init__(self, model_name: str, env_abs_path: str = None):
+    def __init__(
+            self,
+            model_name: str,
+            ENDPOINT: str = None,
+            ENTRA_SCOPE: str = None,
+            API_TEST_KEY: str = None,
+            env_abs_path: str = None):
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
 
-        # Set up environment
-        env = Env()
-        try:
-            env.read_env()
-        except OSError:
-            if env_abs_path is not None and env_abs_path.exists():
-                env.read_env(env_abs_path)
-                print("Loaded .env from", env_abs_path)
-            elif env_abs_path is None:
-                print('No .env file found. Please specify an absolute path')
-            else:
-                print("No .env file found at", env_abs_path)
-        sys.path.append('../')
+        if (ENDPOINT is None and
+            ENTRA_SCOPE is None and
+            API_TEST_KEY is None):
+            # Set up environment
+            env = Env()
+            try:
+                env.read_env()
+            except OSError:
+                if env_abs_path is not None and env_abs_path.exists():
+                    env.read_env(env_abs_path)
+                    print("Loaded .env from", env_abs_path)
+                elif env_abs_path is None:
+                    print('No .env file found. Please specify an absolute path')
+                else:
+                    print("No .env file found at", env_abs_path)
+            sys.path.append('../')
 
-        # Detects which variables are present depending on whether the public OpenAI API
-        # or the GPT4DFCI key is being used based on the .env file
-
-
-
-
-        ENDPOINT = env.str('ENDPOINT', None)
-        ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
-        API_KEY = env.str("API_TEST_KEY", None)
+            ENDPOINT = env.str('ENDPOINT', None)
+            ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
+            API_KEY = env.str("API_TEST_KEY", None)
 
         self.API_TYPE = None
+
+        # Detects which variables are present depending on whether the public OpenAI API
+        # or the GPT4DFCI key is being used based on the API key values given
 
         if ENDPOINT and ENTRA_SCOPE:
             # Detected Azure (GPT4DFCI) environment

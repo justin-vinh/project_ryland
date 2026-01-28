@@ -4,12 +4,15 @@ Author:         Justin Vinh
 Collaborators:  Thomas Sounack
 Parent Package: Project Ryland
 Creation Date:  2025.10.13
-Last Modified:  2025.11.25
 
 Purpose:
 Set up meta info for each model, including cost and API type
 ------------------------------------------------------------------------------
 """
+
+# ============================================================================
+# LAST UPDATED: 2025.01.28
+# ============================================================================
 
 # Cost metadata for each model
 llm_model_meta = {
