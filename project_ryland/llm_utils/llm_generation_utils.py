@@ -34,6 +34,7 @@ from pydantic import ValidationError
 from tqdm import tqdm
 
 from .llm_config import llm_model_meta
+from project_ryland import __version__
 
 # --- Configure logging ---
 logger = logging.getLogger()
@@ -55,41 +56,60 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 # --- Configure logging ---
 
 
-def retrieve_llm_prompt(prompt_name: str) -> Dict[str, str]:
+def retrieve_llm_prompt(
+        prompt_text: str=None,
+        use_prompt_gallery: bool=False,
+        prompt_name: str=None,
+        prompt_gallery_path: str=None) -> Dict[str, str]:
     """
     Retrieve a specific LLM prompt from the centralized prompt gallery.
     Looks up the prompt_name in the YAML registry, loads the associated .txt file,
     and returns the full text. Optionally returns YAML metadata as well.
     """
-    # define the prompt gallery root and prompt config file
-    gallery_dir = Path(__file__).resolve().parent / 'llm_prompt_gallery'
-    prompt_config_path = gallery_dir / 'config_llm_prompts.yaml'
 
-    # Open reference YAML file and handle potential errors
-    try:
-        with open(prompt_config_path, 'r') as f:
-            prompts = yaml.safe_load(f)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f'Could not find prompt config file: {prompt_config_path}'
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f'Error parsing prompt config file: {e}')
+    # Use the prompt gallery if available and specified to do so
+    if use_prompt_gallery:
+        # define the prompt gallery root and prompt config file
+        if prompt_gallery_path is None:
+            print('[ERROR] Using prompt gallery but gallery path not provided.')
+        gallery_dir = prompt_gallery_path
+        prompt_config_path = f"{gallery_dir}/config_llm_prompts.yaml"
 
-    # Validate prompt name before moving forward
-    if prompt_name not in prompts:
-        raise KeyError(f'Prompt {prompt_name} not found in {prompt_config_path}')
+        # Open reference YAML file and handle potential errors
+        try:
+            with open(prompt_config_path, 'r') as f:
+                prompts = yaml.safe_load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f'[ERROR] Could not find prompt config file: {prompt_config_path}. '
+                f'Check file or path to prompt gallery.'
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f'Error parsing prompt config file: {e}')
 
-    # Retrieve prompt metadata
-    prompt_meta = prompts[prompt_name]
-    prompt_filename = gallery_dir / prompt_meta['filename']
+        # Validate prompt name before moving forward
+        if prompt_name not in prompts:
+            raise KeyError(f'[ERROR] Prompt {prompt_name} not found in {prompt_config_path}')
 
-    # Based on the reference file and prompt name, load prompt (and handle errors)
-    try:
-        with open(prompt_filename, 'r') as f:
-            prompt_text = f.read().strip()
-    except FileNotFoundError:
-        raise FileNotFoundError(f'Prompt file not found: {prompt_filename}')
+        # Retrieve prompt metadata
+        prompt_meta = prompts[prompt_name]
+        prompt_filename = f"{gallery_dir}/{prompt_meta['filename']}"
+
+        # Based on the reference file and prompt name, load prompt (and handle errors)
+        try:
+            with open(prompt_filename, 'r') as f:
+                prompt_text = f.read().strip()
+        except FileNotFoundError:
+            raise FileNotFoundError(f'[ERROR] Prompt file not found: {prompt_filename}')
+
+    else:
+    # If the user inserts *only* the prompt text without using the prompt gallery
+    # feature, use the inputted text and create dummy metadata
+        prompt_text = prompt_text
+        prompt_meta = {'filename': 'Filename (Not Applicable)',
+                       'description': 'Description Unknown',
+                       'author': 'Author Unknown',
+                       'date': 'Date Unknown'}
 
     # Return the prompt and the metadata as a dict
     return {'prompt_text': prompt_text, 'metadata': prompt_meta}
@@ -202,16 +222,16 @@ class LLM_wrapper:
     def __init__(
             self,
             model_name: str,
-            ENDPOINT: str = None,
-            ENTRA_SCOPE: str = None,
-            API_TEST_KEY: str = None,
+            endpoint: str = None,
+            entra_scope: str = None,
+            api_test_key: str = None,
             env_abs_path: str = None):
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
 
-        if (ENDPOINT is None and
-            ENTRA_SCOPE is None and
-            API_TEST_KEY is None):
+        if (endpoint is None and
+            entra_scope is None and
+            api_test_key is None):
             # Set up environment
             env = Env()
             try:
@@ -221,37 +241,37 @@ class LLM_wrapper:
                     env.read_env(env_abs_path)
                     print("Loaded .env from", env_abs_path)
                 elif env_abs_path is None:
-                    print('No .env file found. Please specify an absolute path')
+                    print('[ERROR] No .env file found. Please specify an absolute path')
                 else:
-                    print("No .env file found at", env_abs_path)
+                    print("[ERROR] No .env file found at", env_abs_path)
             sys.path.append('../')
 
-            ENDPOINT = env.str('ENDPOINT', None)
-            ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
-            API_KEY = env.str("API_TEST_KEY", None)
+            endpoint = env.str('ENDPOINT', None)
+            entra_scope = env.str('ENTRA_SCOPE', None)
+            api_test_key = env.str("API_TEST_KEY", None)
 
         self.API_TYPE = None
 
         # Detects which variables are present depending on whether the public OpenAI API
         # or the GPT4DFCI key is being used based on the API key values given
 
-        if ENDPOINT and ENTRA_SCOPE:
+        if endpoint and entra_scope:
             # Detected Azure (GPT4DFCI) environment
             print(f'[INFO] Detected Azure OpenAI (GPT4DFCI) configuration')
             self.API_TYPE = "AZURE"
             token_provider = get_bearer_token_provider(
                 DefaultAzureCredential(),
-                ENTRA_SCOPE
+                entra_scope
             )
             self.client = OpenAI(
-                base_url=ENDPOINT,
+                base_url=endpoint,
                 api_key=token_provider,
             )
-        elif API_KEY:
+        elif api_test_key:
             # Detected standard OpenAI environment
             print(f'[INFO] Detected standard OpenAI configuration')
             self.API_TYPE = 'OPENAI'
-            self.client = OpenAI(api_key=API_KEY)
+            self.client = OpenAI(api_key=api_test_key)
         else:
             raise EnvironmentError(
                 "No valid API credentials found. "
@@ -379,7 +399,7 @@ class LLM_wrapper:
             raise ValueError(f"Missing required col {text_column} in input file")
 
         if sample_mode:
-            return df.head(20)
+            return df.head(10)
         return df
 
     @ staticmethod
@@ -436,8 +456,10 @@ class LLM_wrapper:
         Process text data with the LLM and auto-generates unique output filenames.
         """
         # Log start of run
+        logging.info(f'[INFO] project_ryland version {__version__}')
         logging.info('[INFO] New LLM generation run starting...')
         logging.info(f'[INFO] Loading data from: {input_path}')
+        print(f'[INFO] Project Ryland:      v{__version__}')
 
         # Ensure output dir exists
         os.makedirs(output_dir, exist_ok=True)

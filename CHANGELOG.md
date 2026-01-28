@@ -3,6 +3,26 @@
 ### Lindvall & Rhee Labs | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+
+
+### v2.0.0 (January 28, 2026)
+- This is a big one. The package is officially on PyPI (technically as of v1.
+  3.11), but this is the version that will initally be publicized.
+- File tree cleaned to be more user-friendly and files not ready to be 
+  published were removed.
+  - This necessitated changing the logic of several functions in the 
+    llm_generation_utils so that prompts and prompt structures could still 
+    be specified (previously hardcoded)
+- Added feature to show the version number for users to ensure they are 
+  using the most up-to-date version.
+
+### v1.3.11 (January 28, 2026)
+- Changed the sample number for sample_mode to 10
+- Added a publish.yml file to prepare the package for publishing on  PyPI
+- Added the ability to directl yspecify the API Key values in the LLM wrapper
+- Published preliminary version to PyPI
+- Fixed various bugs
+
 ### v1.3.0 (November 24, 2025)
 - llm_generation_utils.py
   - Changed the chat_completion_response section to reflect a change to the 
