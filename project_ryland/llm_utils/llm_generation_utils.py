@@ -219,6 +219,10 @@ class LLM_wrapper:
 
         # Detects which variables are present depending on whether the public OpenAI API
         # or the GPT4DFCI key is being used based on the .env file
+
+
+
+
         ENDPOINT = env.str('ENDPOINT', None)
         ENTRA_SCOPE = env.str('ENTRA_SCOPE', None)
         API_KEY = env.str("API_TEST_KEY", None)
