@@ -57,10 +57,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def retrieve_llm_prompt(
-        prompt_text: str=None,
-        use_prompt_gallery: bool=False,
-        prompt_name: str=None,
-        prompt_gallery_path: str=None) -> Dict[str, str]:
+        prompt_text: str = None,
+        use_prompt_gallery: bool = False,
+        prompt_name: str = None,
+        prompt_gallery_path: str = None) -> Dict[str, str]:
     """
     Retrieve a specific LLM prompt from the centralized prompt gallery.
     Looks up the prompt_name in the YAML registry, loads the associated .txt file,
@@ -116,7 +116,10 @@ def retrieve_llm_prompt(
 
 
 def retrieve_llm_prompt_with_inserted_variables(
-    prompt_name: str,
+    prompt_name: str = None,
+    prompt_text: str = None,
+    use_prompt_gallery: bool = False,
+    prompt_gallery_path: str = None,
     user_prompt_vars: Dict[str, str] = None) -> Dict[str, str]:
     """
     Retrive a stored prompt template, check for any placeholder variables
@@ -124,7 +127,12 @@ def retrieve_llm_prompt_with_inserted_variables(
     user-provided values
     """
     # Retrieve the prompt (format: {'prompt_text': <string>, 'metadata': <dict>})
-    prompt = retrieve_llm_prompt(prompt_name)
+    prompt = retrieve_llm_prompt(
+        prompt_text=prompt_text,
+        use_prompt_gallery=use_prompt_gallery,
+        prompt_gallery_path=prompt_gallery_path,
+        prompt_name=prompt_name
+    )
 
     # Find what variable(s) are in the prompt:
     text = prompt['prompt_text']
@@ -298,15 +306,23 @@ class LLM_wrapper:
 
     @staticmethod
     def load_prompt(
-        prompt_name: str,
-        user_prompt_vars: Dict[str, str],
+        use_prompt_gallery: bool = False,
+        prompt_gallery_path: str = None,
+        prompt_name: str = None,
+        prompt_text: str = None,
+        user_prompt_vars: Dict[str, str] = None,
         return_matadata: bool=False) -> str:
         """
         Load a specific prompt from the centralized prompt gallery.
         Print metadata if desired
         """
-        prompt = retrieve_llm_prompt_with_inserted_variables(prompt_name,
-                                                             user_prompt_vars)
+        prompt = retrieve_llm_prompt_with_inserted_variables(
+            prompt_name=prompt_name,
+            prompt_text=prompt_text,
+            use_prompt_gallery=use_prompt_gallery,
+            prompt_gallery_path=prompt_gallery_path,
+            user_prompt_vars=user_prompt_vars
+        )
         if return_matadata:
             print(f'[INFO] Prompt Info...')
             for key, value in prompt['metadata'].items():
@@ -440,10 +456,13 @@ class LLM_wrapper:
     # -------------------------------------------------------------------------
     def process_text_data(
         self,
-        input_path,
-        prompt_to_get,
+        input_file_path,
         text_column,
         format_class,
+        use_prompt_gallery: bool = False,
+        prompt_gallery_path: str = None,
+        prompt_to_get: str = None,
+        prompt_text: str = None,
         user_prompt_vars = None,
         sample_mode: bool = False,
         flatten: bool = True,
@@ -458,7 +477,7 @@ class LLM_wrapper:
         # Log start of run
         logging.info(f'[INFO] project_ryland version {__version__}')
         logging.info('[INFO] New LLM generation run starting...')
-        logging.info(f'[INFO] Loading data from: {input_path}')
+        logging.info(f'[INFO] Loading data from: {input_file_path}')
         print(f'[INFO] Project Ryland:      v{__version__}')
 
         # Ensure output dir exists
@@ -476,7 +495,10 @@ class LLM_wrapper:
 
         # Set up checkpointing and prompts
         prompt = self.load_prompt(
-            prompt_to_get,
+            use_prompt_gallery=use_prompt_gallery,
+            prompt_gallery_path=prompt_gallery_path,
+            prompt_text=prompt_text,
+            prompt_name=prompt_to_get,
             user_prompt_vars=user_prompt_vars,
             return_matadata=True)
 
@@ -498,7 +520,7 @@ class LLM_wrapper:
                 if 'generation' not in df.columns:
                     df['generation'] = None
         if df is None:
-            df = self.load_input_file(input_path, text_column, sample_mode=sample_mode)
+            df = self.load_input_file(input_file_path, text_column, sample_mode=sample_mode)
             df['generation'] = None
         df['generation'] = df['generation'].astype('object')
 
