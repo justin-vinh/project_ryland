@@ -335,7 +335,7 @@ class LLM_wrapper:
             print(f'[INFO] Prompt source: {prompt_source}')
             for key, value in prompt['metadata'].items():
                 print(f'{key}: {value}')
-            print('')
+            print('\n')
         return prompt['prompt_text']
 
     # Set up the API interaction
@@ -500,7 +500,6 @@ class LLM_wrapper:
         print(f'[INFO] Output directory:    {output_dir}')
         print(f'[INFO] Checkpoint file:     {checkpoint_path}')
         print(f'[INFO] Final output:        {final_output_path}')
-        print('[INFO] Prompt source:        PROMPT GALLERY')
 
         # Make sure there is either a prompt gallery with associated info,
         # or a prompt provided directly by the user. Else, throw error msg end function
