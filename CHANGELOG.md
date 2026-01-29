@@ -4,6 +4,8 @@
 ##
 
 
+### v2.0.03 (January 28, 2026)
+- bug fixes, user enhancements
 
 ### v2.0.0 (January 28, 2026)
 - This is a big one. The package is officially on PyPI (technically as of v1.

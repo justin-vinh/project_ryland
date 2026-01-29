@@ -72,8 +72,8 @@ def retrieve_llm_prompt(
         # define the prompt gallery root and prompt config file
         if prompt_gallery_path is None:
             print('[ERROR] Using prompt gallery but gallery path not provided.')
-        gallery_dir = prompt_gallery_path
-        prompt_config_path = f"{gallery_dir}/config_llm_prompts.yaml"
+        gallery_dir = Path(prompt_gallery_path)
+        prompt_config_path = gallery_dir / "config_llm_prompts.yaml"
 
         # Open reference YAML file and handle potential errors
         try:
@@ -93,7 +93,7 @@ def retrieve_llm_prompt(
 
         # Retrieve prompt metadata
         prompt_meta = prompts[prompt_name]
-        prompt_filename = f"{gallery_dir}/{prompt_meta['filename']}"
+        prompt_filename = gallery_dir / prompt_meta['filename']
 
         # Based on the reference file and prompt name, load prompt (and handle errors)
         try:
@@ -167,7 +167,7 @@ def retrieve_llm_prompt_with_inserted_variables(
             for k, v in user_prompt_vars.items()
         }
         prompt['prompt_text'] = prompt['prompt_text'].format(**user_prompt_vars_clean)
-        print(f'[INFO] Prompt successfully retrieved + '
+        print(f'\n[INFO] Prompt successfully retrieved + '
               f'placeholder variables replaced by user-defined values:')
         for k, v in user_prompt_vars_clean.items():
             print(f'[INFO] Placeholder:\t\t\t{k} \n[INFO] User value(s):\t\t{v}')
@@ -237,8 +237,8 @@ class LLM_wrapper:
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
 
-        if (endpoint is None and
-            entra_scope is None and
+        if ((endpoint is None and
+            entra_scope is None) or
             api_test_key is None):
             # Set up environment
             env = Env()
@@ -323,8 +323,16 @@ class LLM_wrapper:
             prompt_gallery_path=prompt_gallery_path,
             user_prompt_vars=user_prompt_vars
         )
+
+        # States whether the prompt comes from the prompt gallery or a direct source
+        if use_prompt_gallery:
+            prompt_source = 'PROMPT GALLERY'
+        else:
+            prompt_source = 'USER DIRECTLY PROVIDED'
+
         if return_matadata:
             print(f'[INFO] Prompt Info...')
+            print(f'[INFO] Prompt source: {prompt_source}')
             for key, value in prompt['metadata'].items():
                 print(f'{key}: {value}')
             print('')
@@ -492,16 +500,17 @@ class LLM_wrapper:
         print(f'[INFO] Output directory:    {output_dir}')
         print(f'[INFO] Checkpoint file:     {checkpoint_path}')
         print(f'[INFO] Final output:        {final_output_path}')
+        print('[INFO] Prompt source:        PROMPT GALLERY')
 
         # Make sure there is either a prompt gallery with associated info,
         # or a prompt provided directly by the user. Else, throw error msg end function
         if not use_prompt_gallery and not prompt_text:
-            print(f'[ERROR] Please provide either a prompt_text.\n'
+            print(f'\n[ERROR] Please provide a prompt_text.\n'
                   f'Else, use the prompt gallery function (use_prompt_gallery=True)\n'
                   f'and provide prompt_to_get and prompt_gallery_path')
             return
         if use_prompt_gallery and not prompt_gallery_path and not prompt_to_get:
-            print(f'[ERROR] You have chosen to use the prompt gallery function:\n'
+            print(f'\n[ERROR] You have chosen to use the prompt gallery function:\n'
                   f'Please provide the prompt gallery path and prompt name')
             return
 
@@ -652,13 +661,13 @@ class LLM_wrapper:
                     print(f'[CLEANUP] Deleted checkpoint(s): {f}')
                     logging.info(f'[CLEANUP] Deleted checkpoint: {f}'
                                  f'\n---------------------------------------'
-                                 f'---------------------------------------')
+                                 f'----------------------------------------')
                 except Exception as e:
                     print(f'[WARNING] Could not delete checkpoint: {f}: {e}')
         else:
             print(f'[INFO] Keeping all checkpoints in {output_dir}')
             logging.info(f'[INFO] Keeping all checkpoints in {output_dir}'
                          f'\n-------------------------------------------'
-                         f'---------------------------------------')
+                         f'----------------------------------------')
 
         return df
