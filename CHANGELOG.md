@@ -4,7 +4,7 @@
 ##
 
 
-### v2.0.5 (January 28, 2026)
+### v2.0.7 (January 28, 2026)
 - bug fixes, user enhancements
 
 ### v2.0.0 (January 28, 2026)
