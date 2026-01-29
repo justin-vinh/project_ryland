@@ -237,8 +237,8 @@ class LLM_wrapper:
         """Set up token provider and Azure OpenAI client"""
         # Sets up the environment depending on what was read from the .env file
 
-        if ((endpoint is None and
-            entra_scope is None) or
+        if (endpoint is None and
+            entra_scope is None and
             api_test_key is None):
             # Set up environment
             env = Env()
@@ -258,11 +258,9 @@ class LLM_wrapper:
             entra_scope = env.str('ENTRA_SCOPE', None)
             api_test_key = env.str("API_TEST_KEY", None)
 
-        self.API_TYPE = None
-
         # Detects which variables are present depending on whether the public OpenAI API
         # or the GPT4DFCI key is being used based on the API key values given
-
+        self.API_TYPE = None
         if endpoint and entra_scope:
             # Detected Azure (GPT4DFCI) environment
             print(f'[INFO] Detected Azure OpenAI (GPT4DFCI) configuration')
@@ -468,10 +466,12 @@ class LLM_wrapper:
         text_column,
         format_class,
         use_prompt_gallery: bool = False,
+
         prompt_gallery_path: str = None,
         prompt_to_get: str = None,
         prompt_text: str = None,
         user_prompt_vars = None,
+
         sample_mode: bool = False,
         flatten: bool = True,
         save_every: int = 10,

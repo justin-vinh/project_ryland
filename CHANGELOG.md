@@ -4,7 +4,7 @@
 ##
 
 
-### v2.0.03 (January 28, 2026)
+### v2.0.5 (January 28, 2026)
 - bug fixes, user enhancements
 
 ### v2.0.0 (January 28, 2026)
@@ -15,6 +15,8 @@
   - This necessitated changing the logic of several functions in the 
     llm_generation_utils so that prompts and prompt structures could still 
     be specified (previously hardcoded)
+- Added a feature where the user could use their own prompt library using 
+  the existing feature or input their prompt directly as an argument.
 - Added feature to show the version number for users to ensure they are 
   using the most up-to-date version.
 
