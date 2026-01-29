@@ -493,6 +493,18 @@ class LLM_wrapper:
         print(f'[INFO] Checkpoint file:     {checkpoint_path}')
         print(f'[INFO] Final output:        {final_output_path}')
 
+        # Make sure there is either a prompt gallery with associated info,
+        # or a prompt provided directly by the user. Else, throw error msg end function
+        if not use_prompt_gallery and not prompt_text:
+            print(f'[ERROR] Please provide either a prompt_text.\n'
+                  f'Else, use the prompt gallery function (use_prompt_gallery=True)\n'
+                  f'and provide prompt_to_get and prompt_gallery_path')
+            return
+        if use_prompt_gallery and not prompt_gallery_path and not prompt_to_get:
+            print(f'[ERROR] You have chosen to use the prompt gallery function:\n'
+                  f'Please provide the prompt gallery path and prompt name')
+            return
+
         # Set up checkpointing and prompts
         prompt = self.load_prompt(
             use_prompt_gallery=use_prompt_gallery,
