@@ -27,7 +27,7 @@ def create_quickstart(dest: str, overwrite: bool = False):
 
     # Locate the package's quickstart template folder
     try:
-        import project_ryland.templates.quickstart as qs_pkg
+        import project_ryland.templates.standard_quickstart as qs_pkg
         # This gets the folder path of the quickstart package
         template_dir = Path(pkg_resources.files(qs_pkg))
     except Exception as e:

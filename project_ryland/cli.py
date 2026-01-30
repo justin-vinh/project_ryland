@@ -14,7 +14,7 @@ data using the command line interface.
 """
 
 import argparse
-from project_ryland.templates.quickstart import create_quickstart
+from project_ryland.templates.standard_quickstart import create_quickstart
 
 def main():
     parser = argparse.ArgumentParser(
