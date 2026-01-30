@@ -70,5 +70,4 @@ where = ["project_ryland"]
 "project_ryland.templates" = ["**/*"]
 
 [project.scripts]
-project-ryland-init = "project_ryland.cli:init"
-
+project-ryland-init = "project_ryland.cli:main"
