@@ -1,0 +1,35 @@
+# ----------------------------------------------------------------------------
+# LLM Prompt Configuration File
+# Author: Justin Vinh
+# Created: 2025.10.06
+
+# Purpose:
+# Provide a centralized database of all project prompts
+# ----------------------------------------------------------------------------
+
+
+# Example 1 Prompts
+# ----------------------------------------------------------------------------
+project_1_prompt:
+  filename: example_prompt_1.txt
+  description: |
+    Determine of what type of cancer the patient has based on the 
+    note content.
+  author: Sidney Farber
+  date: 2025.10.06
+
+# Project 2 Prompts
+# ----------------------------------------------------------------------------
+project_2_prompt:
+  filename: example_prompt_1.txt
+  description: |
+    Find the value of the white blood cell count in the note.
+  author: Mary Lasker
+  date: 2025.10.07
+
+project_2_prompt_with_user_variables:
+  filename: example_prompt_2_with_variables.txt
+  description: | 
+    Find the values of user-provided labs and demographics data within the note.
+  author: Emil Frei
+  date: 2025.10.08

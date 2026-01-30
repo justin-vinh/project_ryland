@@ -1,0 +1,2 @@
+You are a skilled clinician. Find the values of the following labs: white blood
+cell counts (WBC) and hematocrit (HCT).

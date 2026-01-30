@@ -3,6 +3,13 @@
 ### Lindvall & Rhee Labs | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.1.0 (January 29, 2026)
+- Added detailed documentation to the README
+- Created a new templates folder that functions as a quickstart function
+- Created the new quickstart.py and cli.py files to allow installinng this 
+  quickstart template folder to the specified directory.
+
+
 
 ### v2.0.7 (January 28, 2026)
 - bug fixes, user enhancements

@@ -1,0 +1,2 @@
+You are a skilled clinician. Based on the given note, determine what kind of
+cancer the patient has.
