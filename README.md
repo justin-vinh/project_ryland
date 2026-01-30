@@ -51,8 +51,26 @@ project_ryland/
    associated metadata
 
 ## Instructions for Use
+
+
+### 1. Installing the API
+1. Ensure that you are on the DFCI network or running the VPN client.
+2. Follow the instructions on the [Azure website](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) to install the Azure CLI 
+   tool. This will be necessary to enable the API for GPT4DFCI.
+2. Once installed, run this command in Terminal (MacOS) or Command Prompt 
+   (Windows):
+```
+az login --allow-no-subscriptions
+```
+3. Running the prior command will open a window for you to login into your 
+   account. Log in.
+
+### 2. Using Project Ryland
 Note: A copy-paste version of the script is available at the end. Variable 
 definitions can also be found at the end after the example script.
+
+1. If this is your first time using Project Ryland, you must install it into 
+   your environment. In Terminal or Command Prompt run the following 
 
 1. Import llm_generation_utils from Project Ryland
 ```
@@ -61,7 +79,7 @@ from project_ryland.llm_utils import llm_generation_utils as llm
 2. In your Jupyter notebook or python script, define your ```endpoint``` and
    ```entra_scope```. The endpoint is user-specific, while the entra_scope 
    is the same for all users (current default for DFCI shown below). These 
-   values should have been provided when you were granted DFCI API access.
+   values should have been provided when you were granted GPT4DFCI API access.
 3. Specify the LLM model that you will be using to run your prompts.
     - Model names can be found in the [llm_config.py file](https://github.com/justin-vinh/project_ryland/blob/main/project_ryland/llm_utils/llm_config.py).
 
