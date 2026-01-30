@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "project_ryland"
-version = "2.1.0"
+version = "2.1.1"
 description = "This project contains standardized tools to use LLMs in research studies for improving patient care."
 authors = [
   {name = "Justin Vinh", email = "jvinh21@gmail.com"}
@@ -62,6 +62,11 @@ extend-select = ["I"]  # Add import sorting
 [tool.ruff.lint.isort]
 known-first-party = ["project_ryland_code"]
 force-sort-within-sections = true
+
+[tool.flit.package]
+include = [
+  "project_ryland/templates/**"
+]
 
 [project.scripts]
 project-ryland-init = "project_ryland.cli:init"

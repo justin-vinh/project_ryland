@@ -1,3 +1,18 @@
+"""
+------------------------------------------------------------------------------
+Author:         Justin Vinh
+Institution:    Dana-Farber Cancer Institute
+Working Groups: Lindvall & Rhee Labs
+Parent Package: Project Ryland
+Creation Date:  2026.01.29
+Last Modified:  2026.01.29
+
+Purpose:
+Allow the user to quickly download the folder with template files and
+data using the command line interface.
+------------------------------------------------------------------------------
+"""
+
 import argparse
 from project_ryland.templates.quickstart import create_quickstart
 

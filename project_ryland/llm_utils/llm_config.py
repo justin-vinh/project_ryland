@@ -11,7 +11,7 @@ Set up meta info for each model, including cost and API type
 """
 
 # ============================================================================
-# LAST UPDATED: 2025.01.28
+# LAST UPDATED: 2025.01.29
 # ============================================================================
 
 # Cost metadata for each model
@@ -39,6 +39,11 @@ llm_model_meta = {
     'gpt-5': {
         'cost_per_1M_token_input':  1.25,
         'cost_per_1M_token_output': 10.00,
+        'type':                     'GPT4DFCI'
+    },
+    'gpt-5.2': {
+        'cost_per_1M_token_input':  1.75,
+        'cost_per_1M_token_output': 14.00,
         'type':                     'GPT4DFCI'
     }
 }
