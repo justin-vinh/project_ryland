@@ -69,18 +69,21 @@ az login --allow-no-subscriptions
 Note: A copy-paste version of the script is available at the end. Variable 
 definitions can also be found at the end after the example script.
 
+**Note: You must be using the VPN Client or be on the DFIC netowrk to use 
+GPT4DFCI.**
+
 1. If this is your first time using Project Ryland, you must install it into 
    your environment. In Terminal or Command Prompt run the following 
 
-1. Import llm_generation_utils from Project Ryland
+2. Import llm_generation_utils from Project Ryland
 ```
 from project_ryland.llm_utils import llm_generation_utils as llm
 ```
-2. In your Jupyter notebook or python script, define your ```endpoint``` and
+3. In your Jupyter notebook or python script, define your ```endpoint``` and
    ```entra_scope```. The endpoint is user-specific, while the entra_scope 
    is the same for all users (current default for DFCI shown below). These 
    values should have been provided when you were granted GPT4DFCI API access.
-3. Specify the LLM model that you will be using to run your prompts.
+4. Specify the LLM model that you will be using to run your prompts.
     - Model names can be found in the [llm_config.py file](https://github.com/justin-vinh/project_ryland/blob/main/project_ryland/llm_utils/llm_config.py).
 
 ```
@@ -89,7 +92,7 @@ ENTRA_SCOPE = "https://cognitiveservices.azure.com/.default"
 model_name="gpt-5"
 ```
 
-4. Run the LLM_wrapper function to initialize the API.
+5. Run the LLM_wrapper function to initialize the API.
     - Note that this only has to be done once per run. You can call the API 
       multiple times in one run 
 
@@ -103,8 +106,8 @@ LLM_wrapper = llm.LLM_wrapper(
 
 
 
-3. Declare the path to your input CSV file. 
-4. Declare the path to your LLM Prompt Library if you will be utilizing that 
+6. Declare the path to your input CSV file. 
+7. Declare the path to your LLM Prompt Library if you will be utilizing that 
    feature. A [template prompt gallery]() is available for download from the 
    GitHub. Add the library to the same directory as your main script. Use of 
    the gallery is highly recommended to track prompts texts, prompt 
@@ -115,7 +118,7 @@ LLM_wrapper = llm.LLM_wrapper(
 input_file = 'pathology_llm_tests.csv'
 gallery_path = "llm_prompt_gallery"
 ```
-[llm_prompt_gallery](../rheelab_commons/rheelab_commons/project_ryland/llm_utils/llm_prompt_gallery)
+8. Use the generation to obtain your LLM output.
 ```
 dfp_new = LLM_wrapper.process_text_data(
     # Essential to specify
@@ -141,10 +144,15 @@ dfp_new = LLM_wrapper.process_text_data(
     save_every=10,
 ```
 
-
-
-
-
+9. Alternatively, use the quickstart to get off the ground quickly!
+```
+from project_ryland.templates.quickstart import create_quickstart
+create_quickstart(dest="~/quickstart")
+```
+or use the command line tool
+```angular2html
+bash project-ryland-init quickstart
+```
 
 
 --------

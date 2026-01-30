@@ -1,2 +1,12 @@
-You are a skilled clinician. Based on the given note, determine what kind of
-cancer the patient has.
+You are a clinically trained physician.
+
+Based only on the information explicitly stated in the clinical note,
+identify the patient's primary cancer diagnosis.
+
+Return the diagnosis if explicity stated and the segment of text that
+supports the conclusion.
+
+If no cancer diagnosis is explicitly stated, return None for the diagnosis and
+supporting text.
+
+Do not speculate or infer beyond the text.

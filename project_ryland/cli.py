@@ -27,7 +27,7 @@ def main():
         "quickstart", help="Create a starter project from template"
     )
     qs_parser.add_argument(
-        "--dest", type=str, default=".",
+        "--dest", type=str, default="project_ryland_quickstart",
         help="Destination directory for the starter project"
     )
     qs_parser.add_argument(

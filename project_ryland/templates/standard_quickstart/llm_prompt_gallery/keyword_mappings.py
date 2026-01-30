@@ -10,7 +10,7 @@ Contain the keyword mappings for the Project Ryland Utils.
 ------------------------------------------------------------------------------
 """
 
-example_prompt_2_user_variables = {
+example_2_prompt_variables = {
 
     'lab_tests': [
         'WBC',
