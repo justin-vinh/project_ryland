@@ -1,0 +1,27 @@
+# CITATION.cff for project_ryland
+cff-version: "1.2.0"
+message: "If you use this software in your work, please cite it as below."
+title: "project_ryland"
+type: "software"
+version: "2.x.x"
+date-released: "2026-01-30"
+abstract: "project_ryland: Research sYstem for LLM‑based Analytics of Novel Data — utilities for working with LLMs in clinical research workflows."
+authors:
+  - given-names: "Justin"
+    family-names: "Vinh"
+    affiliation: "Author / maintainer"
+    orcid: "https://orcid.org/0009-0007-2243-1783"
+  - given-names: "Thomas"
+    family-names: "Sounack"
+    affiliation: "Contributing author"
+    orcid: "https://orcid.org/0009-0002-5548-2695"
+repository-code: "https://github.com/justin-vinh/project_ryland"
+keywords:
+  - "LLM"
+  - "clinical research"
+  - "Python"
+license: "MIT"
+identifiers:
+  # Optional: fill this in if you mint a DOI for the software release (e.g., via Zenodo)
+  # - type: doi
+  #   value: "to be added soon"

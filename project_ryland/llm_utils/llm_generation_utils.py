@@ -6,7 +6,7 @@ Institution:    Dana-Farber Cancer Institute
 Working Groups: Lindvall & Rhee Labs
 Parent Package: Project Ryland
 Creation Date:  2025.10.06
-Last Modified:  2025.11.24
+Last Modified:  2026.02.05
 
 Purpose:
 Contain the functions necessary to pull the proper LLM prompt and
@@ -228,15 +228,56 @@ class LLMCostTracker:
 
 class LLM_wrapper:
     def __init__(
-            self,
-            model_name: str,
-            endpoint: str = None,
-            entra_scope: str = None,
-            api_test_key: str = None,
-            env_abs_path: str = None):
-        """Set up token provider and Azure OpenAI client"""
-        # Sets up the environment depending on what was read from the .env file
+        self,
+        model_name: str,
+        endpoint: str = None,
+        entra_scope: str = None,
+        api_test_key: str = None,
+        env_abs_path: str = None):
+        """
+        Initialize an LLM_wrapper client for Azure OpenAI (GPT4DFCI) or public OpenAI.
 
+        This constructor detects and configures API credentials from either explicit
+        arguments or environment variables loaded from a ``.env`` file. It supports:
+
+        - Azure OpenAI (via endpoint + Entra scope token provider)
+        - Public OpenAI API (via API key)
+
+        If no credentials are passed directly, environment variables are loaded using
+        ``environs.Env``. An optional absolute path to a ``.env`` file may be provided.
+
+        :param model_name: Name of the LLM model to use for chat completions.
+                           Must exist in ``llm_model_meta`` for cost tracking.
+        :type model_name: str
+
+        :param endpoint: Azure OpenAI endpoint base URL. If provided together with
+                         ``entra_scope``, Azure authentication is used.
+        :type endpoint: str | None
+
+        :param entra_scope: Azure Entra ID scope used to obtain a bearer token for
+                            Azure OpenAI authentication.
+        :type entra_scope: str | None
+
+        :param api_test_key: Public OpenAI API key. If provided (and Azure variables
+                             are not), standard OpenAI authentication is used.
+        :type api_test_key: str | None
+
+        :param env_abs_path: Absolute path to a ``.env`` file to load if one is not
+                             found automatically in the working directory.
+        :type env_abs_path: pathlib.Path | None
+
+        :raises EnvironmentError:
+            If neither Azure credentials (endpoint + entra_scope) nor an OpenAI API key
+            can be found from arguments or environment variables.
+
+        :ivar API_TYPE: Detected API backend type ("AZURE" or "OPENAI").
+        :vartype API_TYPE: str
+
+        :ivar client: Configured OpenAI client instance for the selected backend.
+        :vartype client: openai.OpenAI
+        """
+
+        # Sets up the environment depending on what was read from the .env file
         if (endpoint is None and
             entra_scope is None and
             api_test_key is None):
@@ -477,11 +518,86 @@ class LLM_wrapper:
         save_every: int = 10,
         output_dir: str = '../tmp',
         keep_checkpoints: bool = False,
-        resume: bool = True
-    ):
+        resume: bool = True):
         """
-        Process text data with the LLM and auto-generates unique output filenames.
+        Run LLM generation on a text dataset with checkpointing, cost tracking,
+        and optional output flattening.
+
+        This method loads a CSV input file, retrieves a prompt (either directly or
+        from the prompt gallery), and sends each row of text to the configured LLM.
+        Structured responses are stored, checkpointed periodically, optionally
+        flattened into columns, and written to a timestamped output file.
+
+        The pipeline supports resume-from-checkpoint, prompt templating with variable
+        substitution, and per-run cost tracking.
+
+        :param input_file_path: Path to the input CSV file containing text data.
+        :type input_file_path: str | pathlib.Path
+
+        :param text_column: Name of the column containing text to send to the LLM.
+        :type text_column: str
+
+        :param format_class: Pydantic model class defining the structured response
+                             schema expected from the LLM.
+        :type format_class: type
+
+        :param use_prompt_gallery: Whether to load the prompt from the prompt gallery
+                                   configuration instead of using direct prompt text.
+        :type use_prompt_gallery: bool
+
+        :param prompt_gallery_path: Path to the prompt gallery directory containing
+                                    the YAML config and prompt files.
+        :type prompt_gallery_path: str | None
+
+        :param prompt_to_get: Prompt name key defined in the prompt gallery YAML file.
+        :type prompt_to_get: str | None
+
+        :param prompt_text: Direct prompt text to use when not using the prompt gallery.
+        :type prompt_text: str | None
+
+        :param user_prompt_vars: Mapping of placeholder variables to replacement values
+                                 for prompt templates (e.g., ``{"symptoms": [...]}``).
+        :type user_prompt_vars: dict | None
+
+        :param sample_mode: If True, only the first 10 rows of the dataset are processed.
+        :type sample_mode: bool
+
+        :param flatten: If True, flatten structured JSON outputs into separate columns
+                        after generation.
+        :type flatten: bool
+
+        :param save_every: Number of processed rows between checkpoint file saves.
+        :type save_every: int
+
+        :param output_dir: Directory where checkpoint and final output CSV files
+                           will be written.
+        :type output_dir: str
+
+        :param keep_checkpoints: If True, keep checkpoint files after completion.
+                                 If False, they are deleted at the end.
+        :type keep_checkpoints: bool
+
+        :param resume: If True, resume from the most recent checkpoint file found
+                       in ``output_dir`` for this model.
+        :type resume: bool
+
+        :returns: DataFrame containing original data plus LLM generation results and
+                  any flattened output columns.
+        :rtype: pandas.DataFrame
+
+        :raises ValueError:
+            If the required text column is missing from the input file.
+
+        :raises ValidationError:
+            If the LLM structured response fails Pydantic schema validation.
+
+        :notes:
+            - Output filenames include model name and timestamp.
+            - A ``generation`` column stores raw structured responses as JSON strings.
+            - Cost estimates are tracked using ``LLMCostTracker``.
+            - Checkpoints are written as CSV and allow interrupted runs to resume.
         """
+
         # Log start of run
         logging.info(f'[INFO] project_ryland version {__version__}')
         logging.info('[INFO] New LLM generation run starting...')
