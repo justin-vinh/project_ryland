@@ -369,6 +369,7 @@ class LLM_wrapper:
         else:
             prompt_source = 'USER DIRECTLY PROVIDED'
 
+        # Print any prompt metadata if available
         if return_matadata:
             print(f'[INFO] Prompt Info...')
             print(f'[INFO] Prompt source: {prompt_source}')
@@ -461,6 +462,7 @@ class LLM_wrapper:
         if text_column not in df.columns:
             raise ValueError(f"Missing required col {text_column} in input file")
 
+        # Return only 10 rows if sample_mode=True
         if sample_mode:
             return df.head(10)
         return df

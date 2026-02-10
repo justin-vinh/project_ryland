@@ -1,15 +1,20 @@
 # Project Ryland Changelog
 ## Author: Justin Vinh
-### Lindvall & Rhee Labs | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
+### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
+
+### v2.1.10 (February 10, 2026)
+- Added more detailed documentation to the README
+  - A dictionary of arguments for process_text_data function
+  - Instructions for how to use the prompt gallery
+  - Notes on the contents of the quickstart
+- Fixed various bugs
 
 ### v2.1.0 (January 29, 2026)
 - Added detailed documentation to the README
 - Created a new templates folder that functions as a quickstart function
 - Created the new quickstart.py and cli.py files to allow installinng this 
   quickstart template folder to the specified directory.
-
-
 
 ### v2.0.7 (January 28, 2026)
 - bug fixes, user enhancements
@@ -100,9 +105,9 @@
 ### v1.2.1 (October 8, 2025)
 - Added a function (retrieve_llm_prompt_with_inserted_variables) to 
   llm_utils that enable template prompts to be used via placeholder 
-  variables that the user can then fill in at time of run. This is will be 
+  variables that the user can then fill in at time of run. This will be 
   essential to the GWAS project
-- Cleaned up the code in the analysis_utils to be more human readable
+- Cleaned up the code in the analysis_utils to be more human-readable
 - BUG FIXES
   - fixed an error in which all diagnoses that came from the 
     filter_progress_notes function resulted in NA for diagnoses for all 
@@ -111,7 +116,7 @@
     added when the notes/treatment df was merged with the notes/diagnosis df 
     at the end of filter_progress_notes
 
-### v1.2 (Oct 6, 2025)
+### v1.2.0 (Oct 6, 2025)
 - split the ryland_utils into data and llm subpackages
 - created a config_llm_prompts.yaml file to act as the central tracker of 
   prompts and provide a reliable way to find past prompts
@@ -131,7 +136,7 @@
 - Cleaned up the Jupyter noteboks being used to process the data and import 
   the ryland utils
 
-### v1.1 (Sep 30, 2025)
+### v1.1.0 (Sep 30, 2025)
 - Created analysis_utils.py
   - this function is a heavily modified port of code found in the old NANO 
     progress note prep file as well as various nano_utils cleaning functions.
@@ -139,13 +144,13 @@
       the original code. Code has also been greatly modularized to take 
       advantage of helper functions
 
-### v1.0 (Sep 29, 2025)
+### v1.0.0 (Sep 29, 2025)
 - Created the Project Ryland utils package
   - Once the Project Ryland (Research sYstem for LLM-based Analytics of Novel 
     Data) package matures through the development of the NANO Gen2 code, it 
     will be separated into its own repo to provide a single source of truth 
     for analytical and cleaning functions related to our LLM research.
-  - Refactored Zach Tentor's old code and made significant changes in 
+  - Refactored ZT's old code and made significant changes in 
     rebuilding it from the ground up
   - extract_text is now split into one main function with 4 helper functions
     - code logic for the extract_text functionality is greatly simplified 
@@ -161,10 +166,3 @@
     source of truth for future mappings
   - Created a io_utils module that now contains the load_onc_drs_json_to_df 
     function and associated helpers
-- Created the 0.00 data prep EDA file
-  - Did some exploratory data analysis of the Lindvall 204475 dataset
-  - Terminology is also brought into unison with code processing pathology and progress notes 
-    (like calling the extracted text "EXTRACTED_TEXT")
-  - the 0.00_processed_imaging_notes.csv file now contains _all_ rows from 
-    the original df, unlike Zach's original code, which dropped rows which 
-    had NA in the IMPRESSION_TEXT column

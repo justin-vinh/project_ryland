@@ -66,7 +66,7 @@ project_ryland/
 ```
 ---
 
-## Instructions for Use
+## Instructions for General Use
 
 
 ### Installing the GPT4DFCI API
@@ -83,22 +83,49 @@ az login --allow-no-subscriptions
 
 ### Installing Project Ryland
 1. You can install Project Ryland using pip:
-```
+```bash
 pip install project-ryland
 ```
 
 ### Using Project Ryland (Quickstart)
-1. Use the quickstart to get off the ground quickly! Run this command from a 
+**Note: You must be using the VPN Client or be on the DFIC netowrk to use 
+GPT4DFCI.**
+1. Use the quickstart to get off the ground quickly! To create the 
+   quickstart in your working directory, run this command from a 
    python script:
 ```
 from project_ryland.templates.quickstart import create_quickstart
 create_quickstart(dest="~/quickstart")
 ```
 or use the command line tool:
-```angular2html
-bash project-ryland-init quickstart
+```bash
+project-ryland-init quickstart
 ```
+The quickstart contains a template prompt gallery (`config_llm_prompts.yaml`)
+, two static prompts (`example_prompt_1.txt` and `example_prompt_2.txt`), one 
+dynamic prompt (`example_prompt_2_with_variables.txt`), and their associated 
+prompt structures (`prompt_structs.py`). The `keyword_mappings.py` file 
+contains example user variables to be used with the dynamic prompt. Finally, 
+`synthetic_clinical_notes.csv` contains generated clinical data for quick 
+demonstration use of the prompts. See below for instructions for how to use 
+the prompt gallery.
 
+The `project_ryland_quickstart.ipynb` file contains the general code to run 
+Project Ryland.
+```
+standard_quickstart/
+├── __init__.py
+├── llm_prompt_gallery/
+│   ├── __init__.py
+│   ├── config_llm_prompts.yaml
+│   ├── example_prompt_1.txt
+│   ├── example_prompt_2_with_variables.txt
+│   ├── example_prompt_2.txt
+│   ├── keyword_mappings.py
+│   └── prompt_structs.py
+├── project_ryland_quickstart.ipynb
+└── synthetic_clinical_notes.csv
+```
 
 
 ### Using Project Ryland (Manual)
@@ -178,6 +205,34 @@ df = LLM_wrapper.process_text_data(
 )
 ```
 ---
+
+## Instructions for Using the Prompt Gallery
+The prompt gallery was designed by Justin as a method of storing prompt 
+metadata and is made to facilitate iterative prompt design. This metadata is 
+stored in the YAML file shown in the quickstart. Several prompts are already 
+detailed in the template and can be a good place to start. Let's look at one 
+of them:
+```
+example_1_prompt:
+  filename: example_prompt_1.txt
+  description: |
+    Determine of what type of cancer the patient has based on the 
+    note content.
+  author: Sidney Farber
+  date: 2025.10.06
+```
+- The first key `example_1_prompt` is the name of the prompt and is used in 
+  the API call. The prompt name does _not_ need to be the same as the prompt 
+  filename.
+- `filename` specifies the path to the prompt txt file, relative to the 
+  gallery directory. In this case, the txt file is in the same directory as 
+  the prompt gallery YAML file and so only the prompt filename is needed.
+- The other metadata keys like `description`, `author`, and `date` are 
+  optional and can be changed to any kind of other metadata suiting the 
+  user's needs. A vertical line `|` allows the user to add a multiline 
+  value (as in the case of `description`).
+
+---
 ## Dictionary
 
 ### Arguments for process_text_data function
@@ -225,10 +280,9 @@ df = LLM_wrapper.process_text_data(
 - `save_every` is an integer that specifies the interval between checkpoints.
   The default is 10 rows.
 
+
+
 ---
-
-
-
 ## License
 Project Ryland is released under the MIT License. See LICENSE file for more details.
 
