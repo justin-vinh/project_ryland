@@ -3,6 +3,13 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.2.0 (February 18, 2026)
+- Added a new module in llm_utils called llm_tracker.py. This is ported into 
+  the existing llm_generation_utils module using a wrapper function
+  - The purpose of this function will be to scrape the generated log and 
+    export a csv summary of all known runs and metrics like cost, duration, 
+    rows ran, output filename, etc
+
 ### v2.1.10 (February 10, 2026)
 - Added more detailed documentation to the README
   - A dictionary of arguments for process_text_data function

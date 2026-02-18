@@ -88,7 +88,7 @@ pip install project-ryland
 ```
 
 ### Using Project Ryland (Quickstart)
-**Note: You must be using the VPN Client or be on the DFIC netowrk to use 
+**Note: You must be using the VPN Client or be on the DFIC network to use 
 GPT4DFCI.**
 1. Use the quickstart to get off the ground quickly! To create the 
    quickstart in your working directory, run this command from a 
@@ -132,7 +132,7 @@ standard_quickstart/
 Note: A copy-paste version of the script is available at the end. Variable 
 definitions can also be found at the end after the example script.
 
-**Note: You must be using the VPN Client or be on the DFIC netowrk to use 
+**Note: You must be using the VPN Client or be on the DFIC network to use 
 GPT4DFCI.**
 
 1. If this is your first time using Project Ryland, you must install it into 
@@ -150,9 +150,9 @@ from project_ryland.llm_utils import llm_generation_utils as llm
     - Model names can be found in the [llm_config.py file](https://github.com/justin-vinh/project_ryland/blob/main/project_ryland/llm_utils/llm_config.py).
 
 ```
-ENDPOINT = "https://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ENDPOINT = "https://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ENTRA_SCOPE = "https://cognitiveservices.azure.com/.default"
-model_name="gpt-5"
+model_name = "gpt-5"
 ```
 
 5. Run the LLM_wrapper function to initialize the API.
@@ -307,7 +307,7 @@ formatted citations (APA, BibTeX, etc.).
 ### BibTeX
 
 ```bibtex
-@software{vinh_project_ryland,
+@software{project_ryland,
   author = {Vinh, Justin and Sounack, Thomas},
   title = {project_ryland: Research sYstem for LLM-based Analytics of Novel Data},
   year = {2026},

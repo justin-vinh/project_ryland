@@ -34,6 +34,7 @@ from pydantic import ValidationError
 from tqdm import tqdm
 
 from .llm_config import llm_model_meta
+from .llm_tracker import update_run_summary
 from project_ryland import __version__
 
 # --- Configure logging ---
@@ -54,6 +55,24 @@ logger.addHandler(file_handler)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 # --- Configure logging ---
+
+
+def summarize_llm_runs(
+    log_path: str | Path = "llm_tracking.log",
+    csv_path: str | Path = "llm_run_summaries.csv"
+) -> pd.DataFrame:
+    """
+    Parse Project Ryland llm_tracking.log files and maintain a structured
+    CSV summary of completed LLM runs.
+    """
+
+    # Use the func from llm_tracker.py
+    df = update_run_summary(
+        log_path=log_path,
+        csv_path=csv_path
+    )
+
+    return df
 
 
 def retrieve_llm_prompt(
