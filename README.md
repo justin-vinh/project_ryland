@@ -204,6 +204,16 @@ df = LLM_wrapper.process_text_data(
     save_every=10,
 )
 ```
+9. Optionally use the `summarize_llm_runs` function to give a quick summary 
+   of the generation metrics of this LLM run (and of all known LLM runs).
+```
+df_log = llm.summarize_llm_runs(
+    log_path="llm_tracking.log",
+    csv_path="llm_run_summaries.csv",
+)
+df_log.tail()
+```
+
 ---
 
 ## Instructions for Using the Prompt Gallery
