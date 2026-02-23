@@ -5,51 +5,30 @@ Institution:    Dana-Farber Cancer Institute
 Working Groups: Lindvall & Rhee Labs
 Parent Package: Project Ryland
 Creation Date:  2026.02.10
-Last Modified:  2026.02.18
+Last Modified:  2026.02.23
 
 Purpose:
 Parse Project Ryland llm_tracking.log files and maintain a structured
-CSV summary of completed LLM runs.
+CSV summary of LLM runs (including interrupted runs).
 ------------------------------------------------------------------------------
-Designed for notebook use via import — not command line usage.
-
-Extracted fields per completed run:
-    - DATE
-    - RUN_ID
-    - MODEL
-    - OUTPUT_FILE
-    - COST
-    - ROWS_TOTAL
-    - DURATION_MIN
-
-Example
--------
-from track_costs import update_run_summary
-
-df = update_run_summary(
-    log_path="output_llm/llm_tracking.log",
-    csv_path="output_llm/run_summary.csv"
-)
 """
 
 import re
 from pathlib import Path
 from typing import List, Dict
-
 import pandas as pd
 
 
-# ---------------------------------------------------------------------
-# Log Parsing
-# ---------------------------------------------------------------------
+# =============================================================================
+# LEGACY PARSER
+# =============================================================================
 
 def _parse_completed_runs(log_text: str) -> List[Dict]:
     """
-    Parse completed LLM runs from a tracking log string.
+    Legacy parser (completed runs only).
     """
 
     runs = []
-
     blocks = re.split(r"-{10,}", log_text)
 
     for block in blocks:
@@ -57,9 +36,6 @@ def _parse_completed_runs(log_text: str) -> List[Dict]:
         if "Final LLM output saved:" not in block:
             continue
 
-        # -------------------------
-        # OUTPUT FILE + PATH
-        # -------------------------
         m_out = re.search(r"Final LLM output saved:\s+(.+)", block)
         if not m_out:
             continue
@@ -67,16 +43,10 @@ def _parse_completed_runs(log_text: str) -> List[Dict]:
         output_path = m_out.group(1).strip()
         output_file = Path(output_path).name
 
-        # -------------------------
-        # INPUT FILE + PATH
-        # -------------------------
         m_in = re.search(r"Loading data from:\s+(.+)", block)
         input_path = m_in.group(1).strip() if m_in else ""
         input_file = Path(input_path).name if input_path else ""
 
-        # -------------------------
-        # MODEL + RUN_ID
-        # -------------------------
         m_file = re.search(
             r"final_(?P<model>.+?)_(?P<runid>\d{8}_\d{4})\.csv",
             output_file
@@ -90,27 +60,19 @@ def _parse_completed_runs(log_text: str) -> List[Dict]:
         date = run_id[:8]
         date_fmt = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
 
-        # -------------------------
-        # COST
-        # -------------------------
         m_cost = re.search(r"Total': '\$(\d+\.\d+)'", block)
         cost_usd = float(m_cost.group(1)) if m_cost else None
 
-        # -------------------------
-        # ROWS TOTAL
-        # -------------------------
         m_rows = re.findall(r"CHECKPOINT: Total:\s*(\d+)", block)
         rows_total = int(m_rows[-1]) if m_rows else None
 
-        # -------------------------
-        # DURATION
-        # -------------------------
         m_dur = re.search(r"Duration:\s*([\d.]+)\s*min", block)
         duration_min = float(m_dur.group(1)) if m_dur else None
 
         runs.append({
-            "DATE": date_fmt,
             "RUN_ID": run_id,
+            "STATUS": "SUCCESS",
+            "DATE": date_fmt,
             "MODEL": model,
             "COST_USD": cost_usd,
             "ROWS_TOTAL": rows_total,
@@ -118,38 +80,148 @@ def _parse_completed_runs(log_text: str) -> List[Dict]:
             "INPUT_FILE": input_file,
             "OUTPUT_FILE": output_file,
             "OUTPUT_PATH": output_path,
-            "INPUT_PATH": input_path
+            "INPUT_PATH": input_path,
+            "RESUMED_FROM_CHECKPOINT": False
         })
 
     return runs
 
 
-# ---------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------
+# =============================================================================
+# NEW PARSER (AUDIT VERSION)
+# =============================================================================
+
+def _parse_completed_runs_v2(log_text: str) -> List[Dict]:
+    """
+    Parse new log format with explicit Unique Run ID.
+
+    - '=====' marks start of run
+    - Uses logged Unique Run ID (with seconds precision)
+    - Logs SUCCESS and INTERRUPTED
+    - Cost = latest cumulative or final cost
+    - Detects resumed runs
+    - Scrapes prompt struct and prompt name
+    """
+
+    runs = []
+    blocks = re.split(r"=+", log_text)
+
+    for block in blocks:
+
+        if "[START] New LLM generation run starting" not in block:
+            continue
+
+        # -------------------------
+        # RUN ID (required)
+        # -------------------------
+        m_run = re.search(r"Unique Run ID:\s*(\d{8}_\d{6})", block)
+        if not m_run:
+            continue
+
+        run_id = m_run.group(1)
+        date = run_id[:8]
+        date_fmt = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
+
+        # -------------------------
+        # STATUS
+        # -------------------------
+        completed = "Final LLM output saved:" in block
+        status = "SUCCESS" if completed else "INTERRUPTED"
+
+        # -------------------------
+        # MODEL
+        # -------------------------
+        m_model = re.search(r"Loading LLM model:\s+(.+)", block)
+        model = m_model.group(1).strip() if m_model else None
+
+        # -------------------------
+        # PROMPT STRUCT + PROMPT NAME
+        # -------------------------
+        m_prompt_struct = re.search(r"Loading prompt struct:\s+(.+)", block)
+        prompt_struct = m_prompt_struct.group(1).strip() if m_prompt_struct else None
+
+        m_prompt_name = re.search(r"Loading prompt:\s+(.+)", block)
+        prompt_name = m_prompt_name.group(1).strip() if m_prompt_name else None
+
+        # -------------------------
+        # INPUT FILE
+        # -------------------------
+        m_in = re.search(r"Loading input data:\s+(.+)", block)
+        input_path = m_in.group(1).strip() if m_in else ""
+        input_file = Path(input_path).name if input_path else ""
+
+        # -------------------------
+        # OUTPUT FILE (if completed)
+        # -------------------------
+        m_out = re.search(r"Final LLM output saved:\s+(.+)", block)
+        output_path = m_out.group(1).strip() if m_out else ""
+        output_file = Path(output_path).name if output_path else ""
+
+        # -------------------------
+        # COST (latest cumulative OR final)
+        # -------------------------
+        cost_matches = re.findall(
+            r'"Total":\s*\$(\d+\.\d+)',
+            block
+        )
+        cost_usd = float(cost_matches[-1]) if cost_matches else None
+
+        # -------------------------
+        # ROWS + RESUME DETECTION
+        # -------------------------
+        checkpoint_matches = re.findall(
+            r"CHECKPOINT:\s*Total:\s*(\d+),\s*Processed:\s*(\d+)",
+            block
+        )
+
+        rows_total = None
+        resumed = False
+
+        if checkpoint_matches:
+            rows_total = int(checkpoint_matches[-1][0])
+            for total, processed in checkpoint_matches:
+                if int(processed) > 0:
+                    resumed = True
+                    break
+
+        # -------------------------
+        # DURATION (latest)
+        # -------------------------
+        dur_matches = re.findall(
+            r"(?:Duration|Time elapsed):\s*([\d.]+)\s*min",
+            block
+        )
+        duration_min = float(dur_matches[-1]) if dur_matches else None
+
+        runs.append({
+            "RUN_ID": run_id,
+            "STATUS": status,
+            "DATE": date_fmt,
+            "MODEL": model,
+            "COST_USD": cost_usd,
+            "ROWS_TOTAL": rows_total,
+            "DURATION_MIN": duration_min,
+            "PROMPT_NAME": prompt_name,
+            "PROMPT_STRUCT": prompt_struct,
+            "INPUT_FILE": input_file,
+            "OUTPUT_FILE": output_file,
+            "OUTPUT_PATH": output_path,
+            "INPUT_PATH": input_path,
+            "RESUMED_FROM_CHECKPOINT": resumed
+        })
+
+    return runs
+
+
+# =============================================================================
+# PUBLIC API
+# =============================================================================
 
 def update_run_summary(
     log_path: str | Path,
-    csv_path: str | Path
+    csv_path: str | Path,
+    legacy: bool = False
 ) -> pd.DataFrame:
-    """
-    Parse a tracking log and update a CSV run summary table.
-
-    Safe for repeated use — prevents duplicate RUN_ID entries.
-
-    Parameters
-    ----------
-    log_path : str or Path
-        Path to llm_tracking.log file
-
-    csv_path : str or Path
-        Path to summary CSV file (created if missing)
-
-    Returns
-    -------
-    pandas.DataFrame
-        Updated run summary table
-    """
 
     log_path = Path(log_path)
     csv_path = Path(csv_path)
@@ -159,17 +231,18 @@ def update_run_summary(
 
     log_text = log_path.read_text()
 
-    runs = _parse_completed_runs(log_text)
+    runs = (
+        _parse_completed_runs(log_text)
+        if legacy
+        else _parse_completed_runs_v2(log_text)
+    )
 
     if not runs:
-        print("No completed runs found.")
+        print("No runs found.")
         return pd.DataFrame()
 
     new_df = pd.DataFrame(runs)
 
-    # -------------------------
-    # Merge with existing CSV
-    # -------------------------
     if csv_path.exists():
         existing_df = pd.read_csv(csv_path)
         combined = pd.concat([existing_df, new_df], ignore_index=True)
@@ -179,15 +252,30 @@ def update_run_summary(
 
     combined = combined.sort_values("RUN_ID")
 
-    # Ensure OUTPUT_PATH is last column
-    cols = list(combined.columns)
-    if "OUTPUT_PATH" in cols:
-        cols = [c for c in cols if c != "OUTPUT_PATH"] + ["OUTPUT_PATH"]
-        combined = combined[cols]
+    # -------------------------
+    # Force exact column order
+    # -------------------------
+    cols_order = [
+        "RUN_ID",
+        "STATUS",
+        "DATE",
+        "MODEL",
+        "COST_USD",
+        "ROWS_TOTAL",
+        "DURATION_MIN",
+        "PROMPT_NAME",
+        "PROMPT_STRUCT",
+        "INPUT_FILE",
+        "OUTPUT_FILE",
+        "OUTPUT_PATH",
+        "INPUT_PATH",
+        "RESUMED_FROM_CHECKPOINT"
+    ]
+    combined = combined[cols_order]
 
     combined.to_csv(csv_path, index=False)
 
-    print(f"Updated run summary file:   {csv_path}")
-    print(f"Total recorded LLM runs:    {len(combined)}")
+    print(f"Updated run summary file: {csv_path}")
+    print(f"Total recorded runs:      {len(combined)}")
 
     return combined

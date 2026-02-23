@@ -3,6 +3,14 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.3.0 (February 23, 2026)
+- Revised how costs and dates are displayed (and their underlying code)
+- Made the log look nicer
+- Made the log now track costs and duration at time of each checkpoint
+- Updated the llm_tracker.py function to recognize the new log formatting, 
+  which has been revised to now include a unique run ID (YYYYMMDD_HHMMSS) 
+  and new logic
+
 ### v2.2.0 (February 18, 2026)
 - Added a new module in llm_utils called llm_tracker.py. This is ported into 
   the existing llm_generation_utils module using a wrapper function

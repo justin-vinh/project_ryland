@@ -6,7 +6,7 @@ Institution:    Dana-Farber Cancer Institute
 Working Groups: Lindvall & Rhee Labs
 Parent Package: Project Ryland
 Creation Date:  2025.10.06
-Last Modified:  2026.02.05
+Last Modified:  2026.02.19
 
 Purpose:
 Contain the functions necessary to pull the proper LLM prompt and
@@ -31,6 +31,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from environs import Env
 from openai import AzureOpenAI, OpenAI
 from pydantic import ValidationError
+from scipy.cluster.hierarchy import complete
 from tqdm import tqdm
 
 from .llm_config import llm_model_meta
@@ -45,7 +46,8 @@ logger.setLevel(logging.INFO)
 logger.handlers = []
 
 # File handler
-file_handler = logging.FileHandler("llm_tracking.log")
+log_filename = "llm_tracking.log"
+file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(logging.Formatter(
     "%(asctime)s | %(message)s", "%Y-%m-%d %H:%M:%S"
 ))
@@ -54,12 +56,20 @@ logger.addHandler(file_handler)
 # Silence noisy libraries
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
+# Silence Azure identity noise (IMDS / credential probing logs)
+logging.getLogger("azure").setLevel(logging.WARNING)
+logging.getLogger("azure.identity").setLevel(logging.WARNING)
+logging.getLogger("azure.core").setLevel(logging.WARNING)
 # --- Configure logging ---
 
 
+# FUNCTIONS
+# -----------------------------------------------------------------------------
 def summarize_llm_runs(
     log_path: str | Path = "llm_tracking.log",
-    csv_path: str | Path = "llm_run_summaries.csv"
+    csv_path: str | Path = "llm_run_summaries.csv",
+    legacy=False
 ) -> pd.DataFrame:
     """
     Parse Project Ryland llm_tracking.log files and maintain a structured
@@ -69,7 +79,8 @@ def summarize_llm_runs(
     # Use the func from llm_tracker.py
     df = update_run_summary(
         log_path=log_path,
-        csv_path=csv_path
+        csv_path=csv_path,
+        legacy=legacy
     )
 
     return df
@@ -208,8 +219,8 @@ class LLMCostTracker:
         self.input_1M_token_cost = model_meta['cost_per_1M_token_input']
         self.output_1M_token_cost = model_meta['cost_per_1M_token_output']
 
-    def update_cost(self, llm_output_meta):
-        """Tracks cumulative costs"""
+    def update_cost(self, llm_output_meta) -> Dict[str, float]:
+        """Tracks cumulative costs and returns costs in a dict format"""
         # Calculate costs
         input_tokens = llm_output_meta.usage.prompt_tokens
         output_tokens = llm_output_meta.usage.completion_tokens
@@ -221,28 +232,38 @@ class LLMCostTracker:
         self.output_cost += output_cost
         self.total_cost = self.input_cost + self.output_cost
 
-        # Add cumulative costs to a dict, handle special case if costs < $0.01
+        # Handle special case if costs < $0.01
+        self.input_cost = 0.01 if self.input_cost < 0.01 else self.input_cost
+        self.output_cost = 0.01 if self.output_cost < 0.01 else self.output_cost
+        self.total_cost = 0.01 if self.total_cost < 0.01 else self.total_cost
+
+        # Add cumulative costs to a dict
         tracker_output = {
-            'Input': f'${'<0.01' 
-                if self.input_cost < 0.01 
-                else f'{self.input_cost:.2f}'}',
-            'Output': f'${'<0.01' 
-                if self.output_cost < 0.01 
-                else f'{self.output_cost:.2f}'}',
-            'Total': f'${'<0.01' 
-                if self.total_cost < 0.01 
-                else f'{self.total_cost:.2f}'}'
+            "Input": self.input_cost,
+            "Output": self.output_cost,
+            "Total": self.total_cost,
         }
         # logging.info(tracker_output)  # Uncomment if you want cum. costs per row
 
         return tracker_output
 
-    def summary(self):
-        return {
-            'input_cost': self.input_cost,
-            'output_cost': self.output_cost,
-            'total_cost': self.total_cost,
-        }
+    def nicely_show_cost(self, as_string=False) -> Dict[str, str]:
+        """Returns formatted cumulative costs for logging/display"""
+
+        # If specified, return output as a string, else return as a dict
+        if as_string:
+            output = (
+                f'"Input": ${self.input_cost:.2f} | '
+                f'"Output": ${self.output_cost:.2f} | '
+                f'"Total": ${self.total_cost:.2f}')
+        else:
+            output = {
+                "Input": f'${self.input_cost:.2f}',
+                "Output": f'${self.output_cost:.2f}',
+                "Total": f'${self.total_cost:.2f}'
+            }
+
+        return output
 
 
 class LLM_wrapper:
@@ -619,21 +640,35 @@ class LLM_wrapper:
             - Checkpoints are written as CSV and allow interrupted runs to resume.
         """
 
-        # Log start of run
-        logging.info(f'[INFO] project_ryland version {__version__}')
-        logging.info('[INFO] New LLM generation run starting...')
-        logging.info(f'[INFO] Loading data from: {input_file_path}')
-        print(f'[INFO] Project Ryland:      v{__version__}')
-
-        # Ensure output dir exists
-        os.makedirs(output_dir, exist_ok=True)
-
         # Generate the timestamped final output and checkpoint names
+
+        #The run ID is the timestamp with added to-the-second precision
         timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+        run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
         base_prefix = f'{self.model_name}_{timestamp}'
         checkpoint_path = os.path.join(output_dir, f'checkpoint_{base_prefix}.csv')
         final_output_path = os.path.join(output_dir, f'final_{base_prefix}.csv')
 
+        # Ensure output dir exists
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Log start of run
+        # The equal sign line signals the start of a run.
+        # A dashed line signals the end of a run.
+        with open(log_filename, 'a') as f:
+            f.write(f'====================================='
+                    f'==========================================\n')
+
+        logging.info(f'[START] New LLM generation run starting...')
+        logging.info(f'[INFO] Project Ryland:           v{__version__}')
+        logging.info(f'[INFO] Unique Run ID:            {run_id}')
+        logging.info(f'[INFO] Loading LLM model:        {self.model_name}')
+        logging.info(f'[INFO] Loading input data:       {input_file_path}')
+        logging.info(f'[INFO] Loading prompt struct:    {format_class.__name__}')
+
+        print(f'[START] New LLM generation run starting...')
+        print(f'[INFO] Project Ryland:      v{__version__}')
+        print(f'[INFO] Unique Run ID:       {run_id}')
         print(f'[INFO] Output directory:    {output_dir}')
         print(f'[INFO] Checkpoint file:     {checkpoint_path}')
         print(f'[INFO] Final output:        {final_output_path}')
@@ -659,7 +694,8 @@ class LLM_wrapper:
             user_prompt_vars=user_prompt_vars,
             return_matadata=True)
 
-        logging.info(f'[INFO] Prompt loaded: {prompt_to_get}')
+        # Log the loaded prompt name
+        logging.info(f'[INFO] Loading prompt:           {prompt_to_get}\n')
 
         # Check for existing checkpoint files to resume from, else start anew
         # Work only on rows without a generation yet
@@ -724,23 +760,48 @@ class LLM_wrapper:
                     df.at[idx, "generation"] = json.dumps(response)
 
                 # Add the costs to the progress bar
-                bar.set_postfix(cost_tracker.update_cost(completion))
+                cost_tracker.update_cost(completion)
+                bar.set_postfix(cost_tracker.nicely_show_cost())
 
+            # Handle exceptions during the LLM run
             except Exception as e:
-                tqdm.write(f'Error with row {idx} → Error: {e}')
                 df.at[idx, 'generation'] = None
 
-            # Save checkpoints every X rows (user-specified)
+                # Print out the error
+                tqdm.write(f'Row {idx} Error: \n{e}\n')
+
+                # Log the error and error type in the log file
+                error_msg = str(e).lower()
+                if "content filter" in error_msg:
+                    error_type = "CONTENT_FILTER"
+                elif "length limit" in error_msg:
+                    error_type = "LENGTH_LIMIT"
+                elif "rate limit" in error_msg:
+                    error_type = "RATE_LIMIT"
+                else:
+                    error_type = "UNKNOWN_ERROR"
+
+                logging.error(f'[ERROR] Row: {idx} | Type: {error_type} | Error: {e}')
+
+            # Save checkpoints every X rows (user-specified, default=10 rows)
             if (i + 1) % save_every == 0 or i == len(unprocessed_df) - 1:
                 with open(checkpoint_path, 'w') as f:
                     df.to_csv(f, index=False)
-                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                logging.info(f'[INFO] Saved checkpoint at row {i+1}')
+                # now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                duration = (datetime.now() - start_time)
+                duration_minutes = duration.total_seconds() / 60
+
+                logging.info(f'[INFO] CHECKPOINT: Saved at row: {i+1}')
+                logging.info(f'[INFO] CHECKPOINT: ├─ Duration:  '
+                             f'{duration_minutes:.2f} min.')
+
+                # Log costs at time of checkpoint
+                logging.info(f'[INFO] CHECKPOINT: └─ Cum. cost: '
+                             f'{cost_tracker.nicely_show_cost(as_string=True)}'
+                )
+
                 # Uncomment if you want to show the checkpoint saved in console
                 #tqdm.write(f'[INFO] {now} Saved checkpoint at row {i+1}')
-
-        # Log the final cost of LLM generation in the log file
-        logging.info(f'[INFO] Cost: {cost_tracker.update_cost(completion)}')
 
         # Flatten the output generation data if desired
         if flatten:
@@ -775,6 +836,11 @@ class LLM_wrapper:
         # Save the final LLM output
         df.to_csv(final_output_path, index=False)
 
+        # Log the final cost of LLM generation in the log file
+        logging.info(f'[SUCCESS] Final cost: '
+                     f'{cost_tracker.nicely_show_cost(as_string=True)}'
+        )
+
         # Display the completion time and print message
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         end_time = datetime.now()
@@ -795,15 +861,11 @@ class LLM_wrapper:
                 try:
                     os.remove(f)
                     print(f'[CLEANUP] Deleted checkpoint(s): {f}')
-                    logging.info(f'[CLEANUP] Deleted checkpoint: {f}'
-                                 f'\n---------------------------------------'
-                                 f'----------------------------------------')
+                    logging.info(f'[CLEANUP] Deleted checkpoint: {f}')
                 except Exception as e:
                     print(f'[WARNING] Could not delete checkpoint: {f}: {e}')
         else:
             print(f'[INFO] Keeping all checkpoints in {output_dir}')
-            logging.info(f'[INFO] Keeping all checkpoints in {output_dir}'
-                         f'\n-------------------------------------------'
-                         f'----------------------------------------')
+            logging.info(f'[INFO] Keeping all checkpoints in {output_dir}')
 
         return df
