@@ -3,6 +3,15 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.4.0 (February 23, 2026)
+- Changed the default save_checkpoint number to 5 (prev. 10)
+- Added a new parameter called number_sampled and set the default to 10 (as 
+  was previous). Previously, 10 was hard codedd in, but now it can be 
+  user-defined
+- Changed load_input_file to a static function
+- Modified the template notebook to reflect the changes, plus add nicer 
+  formatting
+
 ### v2.3.0 (February 23, 2026)
 - Revised how costs and dates are displayed (and their underlying code)
 - Made the log look nicer
@@ -10,6 +19,9 @@
 - Updated the llm_tracker.py function to recognize the new log formatting, 
   which has been revised to now include a unique run ID (YYYYMMDD_HHMMSS) 
   and new logic
+  - With the new llm_tracker.py change, summarize_llm_runs from 
+    llm_generation_utils.py now includes an argument for "legacy=" that will 
+    summarize logs with the old formatting
 
 ### v2.2.0 (February 18, 2026)
 - Added a new module in llm_utils called llm_tracker.py. This is ported into 

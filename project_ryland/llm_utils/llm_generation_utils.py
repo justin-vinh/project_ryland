@@ -491,11 +491,17 @@ class LLM_wrapper:
 
     # Set up data handling functions
     # -------------------------------------------------------------------------
-    def load_input_file(self, input_file: str,
-                        text_column: str,
-                        sample_mode: bool = False) \
-            -> pd.DataFrame:
-        """Load input CSV file and validate columns"""
+    @ staticmethod
+    def load_input_file(
+        input_file: str,
+        text_column: str,
+        sample_mode: bool = False,
+        number_sampled: int = 10
+        ) -> pd.DataFrame:
+        """
+        Load input CSV file, validate columns, and takes the first number
+        of X rows specified if number_sampled if sample_mode is True
+        """
         print(f'[INFO] Reading input data from \n{input_file}\n')
         df = pd.read_csv(input_file)
 
@@ -504,7 +510,7 @@ class LLM_wrapper:
 
         # Return only 10 rows if sample_mode=True
         if sample_mode:
-            return df.head(10)
+            return df.head(number_sampled)
         return df
 
     @ staticmethod
@@ -556,8 +562,9 @@ class LLM_wrapper:
         user_prompt_vars = None,
 
         sample_mode: bool = False,
+        number_sampled: int = 10,
         flatten: bool = True,
-        save_every: int = 10,
+        save_every: int = 5,
         output_dir: str = '../tmp',
         keep_checkpoints: bool = False,
         resume: bool = True):
@@ -603,6 +610,9 @@ class LLM_wrapper:
 
         :param sample_mode: If True, only the first 10 rows of the dataset are processed.
         :type sample_mode: bool
+
+        :param number_sampled: Sets the number of rows to sample; default=10
+        :type number_sampled: int
 
         :param flatten: If True, flatten structured JSON outputs into separate columns
                         after generation.
@@ -665,10 +675,18 @@ class LLM_wrapper:
         logging.info(f'[INFO] Loading LLM model:        {self.model_name}')
         logging.info(f'[INFO] Loading input data:       {input_file_path}')
         logging.info(f'[INFO] Loading prompt struct:    {format_class.__name__}')
+        if sample_mode:
+            logging.info(f'[INFO] SAMPLE MODE STATUS:       ON')
+            logging.info(f'[INFO] Number of samples:        {number_sampled}')
+        else: logging.info(f'[INFO] SAMPLE MODE STATUS:       OFF')
 
         print(f'[START] New LLM generation run starting...')
         print(f'[INFO] Project Ryland:      v{__version__}')
         print(f'[INFO] Unique Run ID:       {run_id}')
+        if sample_mode:
+            print(f'[INFO] SAMPLE MODE STATUS:  ON')
+            print(f'[INFO] Number of samples:   {number_sampled}')
+        else: print(f'[INFO] SAMPLE MODE STATUS:  OFF')
         print(f'[INFO] Output directory:    {output_dir}')
         print(f'[INFO] Checkpoint file:     {checkpoint_path}')
         print(f'[INFO] Final output:        {final_output_path}')
@@ -713,7 +731,12 @@ class LLM_wrapper:
                 if 'generation' not in df.columns:
                     df['generation'] = None
         if df is None:
-            df = self.load_input_file(input_file_path, text_column, sample_mode=sample_mode)
+            df = self.load_input_file(
+                input_file_path,
+                text_column,
+                sample_mode=sample_mode,
+                number_sampled=number_sampled
+            )
             df['generation'] = None
         df['generation'] = df['generation'].astype('object')
 
@@ -837,7 +860,7 @@ class LLM_wrapper:
         df.to_csv(final_output_path, index=False)
 
         # Log the final cost of LLM generation in the log file
-        logging.info(f'[SUCCESS] Final cost: '
+        logging.info(f'[SUCCESS] Final cost:            '
                      f'{cost_tracker.nicely_show_cost(as_string=True)}'
         )
 
