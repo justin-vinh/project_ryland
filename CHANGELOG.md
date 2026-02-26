@@ -3,8 +3,11 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.4.1 (February 25, 2026)
+- Fixed a bug with the legacy use of llm_tracker.py
+
 ### v2.4.0 (February 23, 2026)
-- Changed the default save_checkpoint number to 5 (prev. 10)
+- Changed the default save_every number to 5 (prev. 10)
 - Added a new parameter called number_sampled and set the default to 10 (as 
   was previous). Previously, 10 was hard codedd in, but now it can be 
   user-defined

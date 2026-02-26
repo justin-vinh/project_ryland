@@ -271,6 +271,12 @@ def update_run_summary(
         "INPUT_PATH",
         "RESUMED_FROM_CHECKPOINT"
     ]
+
+    # Ensure all required columns exist
+    for col in cols_order:
+        if col not in combined.columns:
+            combined[col] = None
+
     combined = combined[cols_order]
 
     combined.to_csv(csv_path, index=False)

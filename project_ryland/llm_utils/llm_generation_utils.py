@@ -20,6 +20,7 @@ import logging
 import os
 import re
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
@@ -29,7 +30,7 @@ import pandas as pd
 import yaml
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from environs import Env
-from openai import AzureOpenAI, OpenAI
+from openai import AzureOpenAI, OpenAI, RateLimitError
 from pydantic import ValidationError
 from scipy.cluster.hierarchy import complete
 from tqdm import tqdm
@@ -683,6 +684,7 @@ class LLM_wrapper:
         print(f'[START] New LLM generation run starting...')
         print(f'[INFO] Project Ryland:      v{__version__}')
         print(f'[INFO] Unique Run ID:       {run_id}')
+        print(f'[INFO] LLM model:           {self.model_name}')
         if sample_mode:
             print(f'[INFO] SAMPLE MODE STATUS:  ON')
             print(f'[INFO] Number of samples:   {number_sampled}')
