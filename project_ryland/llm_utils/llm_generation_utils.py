@@ -676,19 +676,11 @@ class LLM_wrapper:
         logging.info(f'[INFO] Loading LLM model:        {self.model_name}')
         logging.info(f'[INFO] Loading input data:       {input_file_path}')
         logging.info(f'[INFO] Loading prompt struct:    {format_class.__name__}')
-        if sample_mode:
-            logging.info(f'[INFO] SAMPLE MODE STATUS:       ON')
-            logging.info(f'[INFO] Number of samples:        {number_sampled}')
-        else: logging.info(f'[INFO] SAMPLE MODE STATUS:       OFF')
 
         print(f'[START] New LLM generation run starting...')
         print(f'[INFO] Project Ryland:      v{__version__}')
         print(f'[INFO] Unique Run ID:       {run_id}')
         print(f'[INFO] LLM model:           {self.model_name}')
-        if sample_mode:
-            print(f'[INFO] SAMPLE MODE STATUS:  ON')
-            print(f'[INFO] Number of samples:   {number_sampled}')
-        else: print(f'[INFO] SAMPLE MODE STATUS:  OFF')
         print(f'[INFO] Output directory:    {output_dir}')
         print(f'[INFO] Checkpoint file:     {checkpoint_path}')
         print(f'[INFO] Final output:        {final_output_path}')
@@ -713,6 +705,16 @@ class LLM_wrapper:
             prompt_name=prompt_to_get,
             user_prompt_vars=user_prompt_vars,
             return_matadata=True)
+
+        # Print and log sample_mode status and number of rows to sample
+        if sample_mode:
+            logging.info(f'[INFO] SAMPLE MODE STATUS:       ON')
+            logging.info(f'[INFO] Number of samples:        {number_sampled}')
+            print(f'[INFO] SAMPLE MODE STATUS:  ON')
+            print(f'[INFO] Number of samples:   {number_sampled}')
+        else:
+            logging.info(f'[INFO] SAMPLE MODE STATUS:       OFF')
+            print(f'[INFO] SAMPLE MODE STATUS:  OFF')
 
         # Log the loaded prompt name
         logging.info(f'[INFO] Loading prompt:           {prompt_to_get}\n')
