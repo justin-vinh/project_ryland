@@ -3,6 +3,12 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.5.0 (March 25, 2026)
+- Changed the behavior of the dynamic prompt. New dynamic variables must use 
+  "{{{<var>}}}" instead of the depreciated "{<var>}". This was done to avoid 
+  accidental matching with prompt text that might use curly brackets.
+- Updated API costs
+
 ### v2.4.1 (February 25, 2026)
 - Fixed a bug with the legacy use of llm_tracker.py
 
