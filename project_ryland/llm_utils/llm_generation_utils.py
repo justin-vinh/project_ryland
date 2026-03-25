@@ -197,6 +197,8 @@ def retrieve_llm_prompt_with_inserted_variables(
             k: ', '.join(v) if isinstance(v, list) else v
             for k, v in user_prompt_vars.items()
         }
+        # Replace double braces with single braces
+        prompt['prompt_text'] = prompt['prompt_text'].replace('{{', '{').replace('}}', '}')
         prompt['prompt_text'] = prompt['prompt_text'].format(**user_prompt_vars_clean)
         print(f'\n[INFO] Prompt successfully retrieved + '
               f'placeholder variables replaced by user-defined values:')
