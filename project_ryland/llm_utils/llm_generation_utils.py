@@ -744,6 +744,8 @@ class LLM_wrapper:
         if df is None:
             if input_df is not None:
                 df = input_df.copy()
+                if sample_mode:
+                    df = df.head(number_sampled)
             else:
                 df = self.load_input_file(
                     input_file_path,
