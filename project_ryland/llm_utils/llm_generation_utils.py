@@ -554,9 +554,11 @@ class LLM_wrapper:
     # -------------------------------------------------------------------------
     def process_text_data(
         self,
-        input_file_path,
+
         text_column,
         format_class,
+        input_df: pd.DataFrame = None,
+        input_file_path: str = None,
         use_prompt_gallery: bool = False,
 
         prompt_gallery_path: str = None,
@@ -585,6 +587,9 @@ class LLM_wrapper:
 
         :param input_file_path: Path to the input CSV file containing text data.
         :type input_file_path: str | pathlib.Path
+
+        :param input_df: Pandas input dataframe
+        :type input_df: pd.DataFrame
 
         :param text_column: Name of the column containing text to send to the LLM.
         :type text_column: str
@@ -737,12 +742,15 @@ class LLM_wrapper:
                 if 'generation' not in df.columns:
                     df['generation'] = None
         if df is None:
-            df = self.load_input_file(
-                input_file_path,
-                text_column,
-                sample_mode=sample_mode,
-                number_sampled=number_sampled
-            )
+            if input_df is not None:
+                df = input_df.copy()
+            else:
+                df = self.load_input_file(
+                    input_file_path,
+                    text_column,
+                    sample_mode=sample_mode,
+                    number_sampled=number_sampled
+                )
             df['generation'] = None
         df['generation'] = df['generation'].astype('object')
 

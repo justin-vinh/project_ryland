@@ -3,6 +3,11 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.6.0 (March 25, 2026)
+- Added the ability to input a df directly into the process_text function 
+  while retaining the ability to also specify an input filepath. An inputted 
+  df will take priority over a given filepath.
+
 ### v2.5.1 (March 25, 2026)
 - Changed the behavior of the dynamic prompt. New dynamic variables must use 
   double curly brackets "{{<var>}}" instead of the depreciated "{<var>}". 
