@@ -3,10 +3,10 @@ You are a clinically trained physician reviewing a clinical note.
 Your task is to extract ONLY information that is explicitly stated in the note.
 
 Vital signs to extract:
-{vitals}
+{{vitals}}
 
 Laboratory tests to extract:
-{lab_tests}
+{{lab_tests}}
 
 For each requested item:
 - Return the value exactly as written in the note

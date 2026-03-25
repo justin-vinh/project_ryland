@@ -167,7 +167,7 @@ def retrieve_llm_prompt_with_inserted_variables(
 
     # Find what variable(s) are in the prompt:
     text = prompt['prompt_text']
-    prompt_vars = re.findall(r'{{{(.*?)}}}', text)
+    prompt_vars = re.findall(r'{{(.*?)}}', text)
     if prompt_vars:
         print(f'[INFO] Placeholder variables are found in the prompt: {prompt_vars}')
     else:
