@@ -1,10 +1,10 @@
 # Project Ryland
 
 ## Description
-This project enables users to more easily access and use the GPT4DFCI API.
+This project enables users to more easily access and use the DFCI AI API.
 
 ### Features
-- **User-friendly interface** for using the GPT4DFCI API
+- **User-friendly interface** for using the DFCI AI API
 - **Local cost tracking** for live estimates of running costs
 - **Automatic logs** to keep track of prompts, model used, and costs
 - **A visual progress bar** to estimate time until completion
@@ -17,9 +17,9 @@ The package is still in development and more features will be added with time.
 ### History
 This project was conceived in fall 2025 when Justin Vinh noticed that no 
 modular, user-friendly package existed at the Dana-Farber Cancer Institute in 
-Boston, MA, to allow users to take advantage of the newly offered GPT4DFCI. 
-GPT4DFCI is the HIPAA-compliant large language model (LLM) interface offered 
-to researchers, and the associated API can be powerful if utilized. So he 
+Boston, MA, to allow users to take advantage of the newly offered DFCI AI API. 
+The DFCI AI API is the HIPAA-compliant large language model (LLM) interface 
+offered to researchers, and the associated API can be powerful if utilized. So he 
 developed this project in collaboration with Thomas Sounack and the support 
 of the Lindvall Lab to fill this gap.
 
@@ -69,10 +69,10 @@ project_ryland/
 ## Instructions for General Use
 
 
-### Installing the GPT4DFCI API
+### Installing the DFCI AI API
 1. Ensure that you are on the DFCI network or running the VPN client.
 2. Follow the instructions on the [Azure website](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) to install the Azure CLI 
-   tool. This will be necessary to enable the API for GPT4DFCI.
+   tool. This will be necessary to enable the DFCI AI API.
 2. Once installed, run this command in Terminal (MacOS) or Command Prompt 
    (Windows):
 ```
@@ -89,7 +89,7 @@ pip install project-ryland
 
 ### Using Project Ryland (Quickstart)
 **Note: You must be using the VPN Client or be on the DFIC network to use 
-GPT4DFCI.**
+the DFCI AI API.**
 1. Use the quickstart to get off the ground quickly! To create the 
    quickstart in your working directory, run this command from a 
    python script:
@@ -132,8 +132,8 @@ standard_quickstart/
 Note: A copy-paste version of the script is available at the end. Variable 
 definitions can also be found at the end after the example script.
 
-**Note: You must be using the VPN Client or be on the DFIC network to use 
-GPT4DFCI.**
+**Note: You must be using the VPN Client or be on the DFIC network to use the
+DFCI AI API.**
 
 1. If this is your first time using Project Ryland, you must install it into 
    your environment. In Terminal or Command Prompt run the following 
@@ -145,7 +145,7 @@ from project_ryland.llm_utils import llm_generation_utils as llm
 3. In your Jupyter notebook or python script, define your ```endpoint``` and
    ```entra_scope```. The endpoint is user-specific, while the entra_scope 
    is the same for all users (current default for DFCI shown below). These 
-   values should have been provided when you were granted GPT4DFCI API access.
+   values should have been provided when you were granted DFCI AI API access.
 4. Specify the LLM model that you will be using to run your prompts.
     - Model names can be found in the [llm_config.py file](https://github.com/justin-vinh/project_ryland/blob/main/project_ryland/llm_utils/llm_config.py).
 

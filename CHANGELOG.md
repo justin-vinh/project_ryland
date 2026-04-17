@@ -3,6 +3,11 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.6.2 (April 16, 2026)
+- Updated language in the README to reflect the name change from GPT4DFCI to 
+  DFCI AI API
+
+
 ### v2.6.0 (March 25, 2026)
 - Added the ability to input a df directly into the process_text function 
   while retaining the ability to also specify an input filepath. An inputted 
