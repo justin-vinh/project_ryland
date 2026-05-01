@@ -3,6 +3,10 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.7.0 (May 1, 2026)
+- Changed the api_test_key variable to just api_key
+- Added the ability for the OpenAI client to also accept a base url if provided
+
 ### v2.6.2 (April 16, 2026)
 - Updated language in the README to reflect the name change from GPT4DFCI to 
   DFCI AI API

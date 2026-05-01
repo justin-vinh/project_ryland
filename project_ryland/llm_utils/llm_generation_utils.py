@@ -275,7 +275,8 @@ class LLM_wrapper:
         model_name: str,
         endpoint: str = None,
         entra_scope: str = None,
-        api_test_key: str = None,
+        api_key: str = None,
+        base_url: str = None,
         env_abs_path: str = None):
         """
         Initialize an LLM_wrapper client for Azure OpenAI (GPT4DFCI) or public OpenAI.
@@ -301,9 +302,9 @@ class LLM_wrapper:
                             Azure OpenAI authentication.
         :type entra_scope: str | None
 
-        :param api_test_key: Public OpenAI API key. If provided (and Azure variables
+        :param api_key: Public OpenAI API key. If provided (and Azure variables
                              are not), standard OpenAI authentication is used.
-        :type api_test_key: str | None
+        :type api_key: str | None
 
         :param env_abs_path: Absolute path to a ``.env`` file to load if one is not
                              found automatically in the working directory.
@@ -323,7 +324,7 @@ class LLM_wrapper:
         # Sets up the environment depending on what was read from the .env file
         if (endpoint is None and
             entra_scope is None and
-            api_test_key is None):
+            api_key is None):
             # Set up environment
             env = Env()
             try:
@@ -340,7 +341,7 @@ class LLM_wrapper:
 
             endpoint = env.str('ENDPOINT', None)
             entra_scope = env.str('ENTRA_SCOPE', None)
-            api_test_key = env.str("API_TEST_KEY", None)
+            api_key = env.str("API_TEST_KEY", None)
 
         # Detects which variables are present depending on whether the public OpenAI API
         # or the GPT4DFCI key is being used based on the API key values given
@@ -357,11 +358,18 @@ class LLM_wrapper:
                 base_url=endpoint,
                 api_key=token_provider,
             )
-        elif api_test_key:
+        elif api_key:
             # Detected standard OpenAI environment
             print(f'[INFO] Detected standard OpenAI configuration')
             self.API_TYPE = 'OPENAI'
-            self.client = OpenAI(api_key=api_test_key)
+
+            # Config the base url if provided, else just the API key
+            if base_url:
+                print(f'[INFO] Adding base URL configuration')
+                self.client = OpenAI(api_key=api_key, base_url=base_url)
+            else:
+                self.client = OpenAI(api_key=api_key)
+
         else:
             raise EnvironmentError(
                 "No valid API credentials found. "
