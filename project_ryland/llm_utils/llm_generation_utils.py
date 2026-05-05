@@ -462,28 +462,79 @@ class LLM_wrapper:
                 )
                 return completion.choices[0].message.parsed, completion
 
-            # Uses the chat response pathway for the public OpenAI API
+            # # Uses the chat response pathway for the public OpenAI API
+            # elif self.API_TYPE == 'OPENAI':
+            #     schema = [openai.pydantic_function_tool(format_class)]
+            #     schema_clean = self.remove_strict_field(schema)
+            #     function_name = self.extract_name_value(schema_clean)
+            #
+            #     chat_response_params['tools'] = schema
+            #     chat_response_params['tool_choice'] = {
+            #         'type': 'function',
+            #         'function': {'name': function_name}
+            #     }
+            #
+            #     # Allow only 3 retries in calling the API
+            #     for attempt in range(3):
+            #         completion = self.client.chat.completions.create(
+            #             **chat_response_params
+            #         )
+            #         if completion:
+            #             response = (completion.choices[0]
+            #                         .message.tool_calls[0]
+            #                         .function.arguments)
+            #             return [json.loads(response), completion]
+
             elif self.API_TYPE == 'OPENAI':
-                schema = [openai.pydantic_function_tool(format_class)]
-                schema_clean = self.remove_strict_field(schema)
-                function_name = self.extract_name_value(schema_clean)
+                try:
+                    # ATTEMPT 1: native tool calling (OpenAI only)
+                    schema = [openai.pydantic_function_tool(format_class)]
+                    schema_clean = self.remove_strict_field(schema)
+                    function_name = self.extract_name_value(schema_clean)
 
-                chat_response_params['tools'] = schema
-                chat_response_params['tool_choice'] = {
-                    'type': 'function',
-                    'function': {'name': function_name}
-                }
+                    chat_response_params['tools'] = schema
+                    chat_response_params['tool_choice'] = {
+                        'type': 'function',
+                        'function': {'name': function_name}
+                    }
 
-                # Allow only 3 retries in calling the API
-                for attempt in range(3):
                     completion = self.client.chat.completions.create(
                         **chat_response_params
                     )
-                    if completion:
-                        response = (completion.choices[0]
-                                    .message.tool_calls[0]
-                                    .function.arguments)
-                        return [json.loads(response), completion]
+
+                    response = (completion.choices[0]
+                                .message.tool_calls[0]
+                                .function.arguments)
+
+                    return json.loads(response), completion
+
+                except Exception:
+                    # FALLBACK: Databricks-safe JSON prompt injection
+                    schema_json = format_class.model_json_schema()
+
+                    fallback_prompt = (
+                        f"{prompt}\n\n"
+                        f"IMPORTANT: Return ONLY valid JSON.\n"
+                        f"The JSON must match this schema:\n{schema_json}"
+                    )
+
+                    chat_response_params['messages'] = [
+                        {"role": "system",
+                         "content": "You are a structured extraction system."},
+                        {"role": "user", "content": fallback_prompt},
+                        {"role": "user", "content": input_text},
+                    ]
+
+                    # remove unsupported fields if they exist
+                    chat_response_params.pop('tools', None)
+                    chat_response_params.pop('tool_choice', None)
+
+                    completion = self.client.chat.completions.create(
+                        **chat_response_params
+                    )
+
+                    parsed = json.loads(completion.choices[0].message.content)
+                    return parsed, completion
 
         # Handle various errors
         except openai.APIError as e:

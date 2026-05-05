@@ -3,6 +3,10 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.9.0 (May 5, 2026)
+- added the ability to inject the prompt structure directly into the prompt 
+  if the API does not accept pydantic model. This is handled automatically.
+
 ### v2.8.0 (May 5, 2026)
 - Updated the llm config with the new claude models on databricks
 - updated how costs are handled to dynamically handle different units ($, 
