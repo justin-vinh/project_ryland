@@ -512,6 +512,8 @@ class LLM_wrapper:
                     # FALLBACK: Databricks-safe JSON prompt injection
                     schema_json = format_class.model_json_schema()
 
+                    print(f'[INFO] Using fallback prompt (prompt + schema)')
+
                     fallback_prompt = (
                         f"{prompt}\n\n"
                         f"IMPORTANT: Return ONLY valid JSON.\n"
