@@ -158,13 +158,28 @@ def _parse_completed_runs_v2(log_text: str) -> List[Dict]:
         output_file = Path(output_path).name if output_path else ""
 
         # -------------------------
-        # COST (latest cumulative OR final)
+        # COST (latest cumulative OR final, with unit detection)
         # -------------------------
         cost_matches = re.findall(
-            r'"Total":\s*\$(\d+\.\d+)',
+            r'"Total":\s*([A-Za-z$]+)\s*(\d+\.\d+)',
             block
         )
-        cost_usd = float(cost_matches[-1]) if cost_matches else None
+
+        cost_dict = {}
+
+        if cost_matches:
+            unit, value = cost_matches[-1]
+
+            # Normalize unit name
+            if unit == "$":
+                unit_key = "USD"
+            else:
+                unit_key = unit.upper()
+
+            cost_dict[f"COST_{unit_key}"] = float(value)
+
+        # Backward compatibility
+        cost_usd = cost_dict.get("COST_USD", None)
 
         # -------------------------
         # ROWS + RESUME DETECTION
@@ -198,7 +213,8 @@ def _parse_completed_runs_v2(log_text: str) -> List[Dict]:
             "STATUS": status,
             "DATE": date_fmt,
             "MODEL": model,
-            "COST_USD": cost_usd,
+            "COST_USD": cost_usd,  # keep for backward compatibility
+            **cost_dict,
             "ROWS_TOTAL": rows_total,
             "DURATION_MIN": duration_min,
             "PROMPT_NAME": prompt_name,
@@ -277,7 +293,12 @@ def update_run_summary(
         if col not in combined.columns:
             combined[col] = None
 
-    combined = combined[cols_order]
+    # Keep known columns first, then dynamically add cost columns
+    cost_cols = [col for col in combined.columns if col.startswith("COST_")]
+
+    final_cols = cols_order + [c for c in cost_cols if c not in cols_order]
+
+    combined = combined[final_cols]
 
     combined.to_csv(csv_path, index=False)
 

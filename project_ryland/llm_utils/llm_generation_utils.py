@@ -221,6 +221,7 @@ class LLMCostTracker:
         model_meta = llm_model_meta[model_name]
         self.input_1M_token_cost = model_meta['cost_per_1M_token_input']
         self.output_1M_token_cost = model_meta['cost_per_1M_token_output']
+        self.cost_unit = model_meta['cost_unit']
 
     def update_cost(self, llm_output_meta) -> Dict[str, float]:
         """Tracks cumulative costs and returns costs in a dict format"""
@@ -245,6 +246,7 @@ class LLMCostTracker:
             "Input": self.input_cost,
             "Output": self.output_cost,
             "Total": self.total_cost,
+            "Unit": self.cost_unit
         }
         # logging.info(tracker_output)  # Uncomment if you want cum. costs per row
 
@@ -256,14 +258,14 @@ class LLMCostTracker:
         # If specified, return output as a string, else return as a dict
         if as_string:
             output = (
-                f'"Input": ${self.input_cost:.2f} | '
-                f'"Output": ${self.output_cost:.2f} | '
-                f'"Total": ${self.total_cost:.2f}')
+                f'"Input": {self.cost_unit}{self.input_cost:.2f} | '
+                f'"Output": {self.cost_unit}{self.output_cost:.2f} | '
+                f'"Total": {self.cost_unit}{self.total_cost:.2f}')
         else:
             output = {
-                "Input": f'${self.input_cost:.2f}',
-                "Output": f'${self.output_cost:.2f}',
-                "Total": f'${self.total_cost:.2f}'
+                "Input": f'{self.cost_unit}{self.input_cost:.2f}',
+                "Output": f'{self.cost_unit}{self.output_cost:.2f}',
+                "Total": f'{self.cost_unit}{self.total_cost:.2f}'
             }
 
         return output

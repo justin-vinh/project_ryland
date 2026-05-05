@@ -3,6 +3,12 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.8.0 (May 5, 2026)
+- Updated the llm config with the new claude models on databricks
+- updated how costs are handled to dynamically handle different units ($, 
+  DBU, etc)
+- updated the llm_tracker.py function to handle dynamic cost units
+
 ### v2.7.0 (May 1, 2026)
 - Changed the api_test_key variable to just api_key
 - Added the ability for the OpenAI client to also accept a base url if provided
