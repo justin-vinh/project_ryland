@@ -566,9 +566,6 @@ class LLM_wrapper:
 
                 print(f'Raw Parsed: {completion.choices[0].message.content}\n')
 
-                import re
-                import json
-
                 content = completion.choices[0].message.content
 
                 # Remove ```json ... ``` wrappers if present
