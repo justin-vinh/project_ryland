@@ -24,6 +24,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
+from pydantic import BaseModel, Field
 
 import openai
 import pandas as pd
@@ -438,7 +439,7 @@ class LLM_wrapper:
         prompt: str,
         input_text: str,
         format_class,
-        cost_tracker: LLMCostTracker):
+        format_class_type='pydantic'):
         """Call the Azure OpenAI API with structured response parsing"""
 
         # Sets up a parameter set for the chat completion response
@@ -460,7 +461,10 @@ class LLM_wrapper:
                 completion = self.client.beta.chat.completions.parse(
                     **chat_response_params
                 )
-                return completion.choices[0].message.parsed, completion
+
+                return (completion.choices[0].message.parsed,
+                        completion,
+                        format_class_type)
 
             # # Uses the chat response pathway for the public OpenAI API
             # elif self.API_TYPE == 'OPENAI':
@@ -485,7 +489,7 @@ class LLM_wrapper:
             #                         .function.arguments)
             #             return [json.loads(response), completion]
 
-            elif self.API_TYPE == 'OPENAI':
+            elif self.API_TYPE == 'OPENAI' and format_class_type == 'json':
                 try:
                     # ATTEMPT 1: native tool calling (OpenAI only)
                     schema = [openai.pydantic_function_tool(format_class)]
@@ -506,37 +510,47 @@ class LLM_wrapper:
                                 .message.tool_calls[0]
                                 .function.arguments)
 
-                    return json.loads(response), completion
+                    format_class_type = 'integrated'
+
+                    return json.loads(response), completion, format_class_type
 
                 except Exception:
-                    # FALLBACK: Databricks-safe JSON prompt injection
-                    schema_json = format_class.model_json_schema()
+                    format_class_type = 'integrated'
+                    return None, None, format_class_type
 
-                    print(f'[INFO] Using fallback prompt (prompt + schema)')
+            elif (self.API_TYPE == 'OPENAI' and
+                  format_class_type == 'integrated'):
+                # FALLBACK: Databricks-safe JSON prompt injection
+                schema_json = format_class.model_json_schema()
 
-                    fallback_prompt = (
-                        f"{prompt}\n\n"
-                        f"IMPORTANT: Return ONLY valid JSON.\n"
-                        f"The JSON must match this schema:\n{schema_json}"
-                    )
+                print(f'[INFO] Using fallback prompt (prompt and schema '
+                      f'integrated together)')
 
-                    chat_response_params['messages'] = [
-                        {"role": "system",
-                         "content": "You are a structured extraction system."},
-                        {"role": "user", "content": fallback_prompt},
-                        {"role": "user", "content": input_text},
-                    ]
+                fallback_prompt = (
+                    f"{prompt}\n\n"
+                    f"IMPORTANT: Return ONLY valid JSON.\n"
+                    f"The JSON must match this schema:\n{schema_json}"
+                )
 
-                    # remove unsupported fields if they exist
-                    chat_response_params.pop('tools', None)
-                    chat_response_params.pop('tool_choice', None)
+                chat_response_params['messages'] = [
+                    {"role": "system",
+                     "content": "You are a structured extraction system."},
+                    {"role": "user", "content": fallback_prompt},
+                    {"role": "user", "content": input_text},
+                ]
 
-                    completion = self.client.chat.completions.create(
-                        **chat_response_params
-                    )
+                # remove unsupported fields if they exist
+                chat_response_params.pop('tools', None)
+                chat_response_params.pop('tool_choice', None)
 
-                    parsed = json.loads(completion.choices[0].message.content)
-                    return parsed, completion
+                completion = self.client.chat.completions.create(
+                    **chat_response_params
+                )
+
+                format_class_type = 'integrated'
+
+                parsed = json.loads(completion.choices[0].message.content)
+                return parsed, completion, format_class_type
 
         # Handle various errors
         except openai.APIError as e:
@@ -838,20 +852,43 @@ class LLM_wrapper:
         start_time = datetime.now()
         print(f'[INFO] Starting LLM API call ({now})')
         cost_tracker = LLMCostTracker(self.model_name)
+
+        # Test the waters - figure out which gate to open for the OpenAI API type
+        if self.API_TYPE =='OPENAI':
+            test_text = 'This is a test'
+            test_prompt = 'Give the first word in the text'
+            class test_struct(BaseModel):
+                test_output: str = Field(None, description='The first word in the text')
+            response, completion, format_class_type = self.openai_chat_completion_response(
+                test_prompt,
+                test_text,
+                test_struct
+            )
+            cost_tracker.update_cost(completion)
+        else:
+            format_class_type = 'pydantic'
+
+        print(f'[INFO] This API is using "{format_class_type}" prompt structure')
+        logging.info(f'[INFO] Prompt Structure Type:    {number_sampled}')
+
         # Sets up the progress bar
         bar = tqdm(unprocessed_df.iterrows(),
                    total=len(unprocessed_df),
                    desc=f'Processing data')
 
+        # Update with initial cost
+        #bar.set_postfix(cost_tracker.nicely_show_cost())
+
         # Row by row, generate the LLM response to the input data
         for i, (idx, row) in enumerate(bar):
             try:
                 input_text = row[text_column]
-                response, completion = self.openai_chat_completion_response(
+                response, completion, format_class_type = self.openai_chat_completion_response(
                     prompt,
                     input_text,
                     format_class,
-                    cost_tracker)
+                    format_class_type
+                )
                 # df.at[idx, 'generation'] = response
 
                 if hasattr(response, "model_dump"):  # Pydantic v2
