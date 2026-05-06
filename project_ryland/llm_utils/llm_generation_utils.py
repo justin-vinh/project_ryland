@@ -451,7 +451,7 @@ class LLM_wrapper:
         }
 
         # Sets the temperature to 0 if using any model other than gpt-5
-        if 'gpt-5' not in self.model_name:
+        if 'gpt-5' not in self.model_name and 'gpt' in self.model_name:
             chat_response_params['temperature'] = 0.0
 
         try:
@@ -532,6 +532,8 @@ class LLM_wrapper:
                     f"The JSON must match this schema:\n{schema_json}"
                 )
 
+                input_text = f'\n-------------------\nINPUT TEXT:\n{input_text}'
+
                 print(fallback_prompt)
                 print(f'{input_text}\n')
 
@@ -551,6 +553,8 @@ class LLM_wrapper:
                 )
 
                 format_class_type = 'integrated'
+
+                print(f'Raw Parsed: {completion.choices[0].message.content}\n')
 
                 parsed = json.loads(completion.choices[0].message.content)
 
