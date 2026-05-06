@@ -457,7 +457,6 @@ class LLM_wrapper:
         try:
             # Uses the chat response pathway for the new DFCI Azure API
             if self.API_TYPE == 'AZURE':
-                print("AZURE PYDANTIC")
                 chat_response_params['response_format'] = format_class
                 completion = self.client.beta.chat.completions.parse(
                     **chat_response_params
@@ -493,7 +492,6 @@ class LLM_wrapper:
             elif self.API_TYPE == 'OPENAI' and format_class_type == 'json':
                 try:
                     # ATTEMPT 1: native tool calling (OpenAI only)
-                    print(f'OPENAI JSON')
                     schema = [openai.pydantic_function_tool(format_class)]
                     schema_clean = self.remove_strict_field(schema)
                     function_name = self.extract_name_value(schema_clean)
@@ -523,7 +521,6 @@ class LLM_wrapper:
             elif (self.API_TYPE == 'OPENAI' and
                   format_class_type == 'integrated'):
                 # FALLBACK: Databricks-safe JSON prompt injection
-                print('OPENAI INTEGRATED')
                 schema_json = format_class.model_json_schema()
 
                 system_prompt = f"""
@@ -542,9 +539,6 @@ class LLM_wrapper:
 
                 input_text = f'\n-------------------\nINPUT TEXT:\n{input_text}'
 
-                print(fallback_prompt)
-                print(f'{input_text}\n')
-
                 chat_response_params['messages'] = [
                     {"role": "system", "content": fallback_prompt},
                     {"role": "user", "content": input_text}
@@ -554,17 +548,11 @@ class LLM_wrapper:
                 chat_response_params.pop('tools', None)
                 chat_response_params.pop('tool_choice', None)
 
-                print(chat_response_params)
-
                 completion = self.client.chat.completions.create(
                     **chat_response_params
                 )
 
                 format_class_type = 'integrated'
-
-
-
-                print(f'Raw Parsed: {completion.choices[0].message.content}\n')
 
                 content = completion.choices[0].message.content
 
@@ -574,11 +562,6 @@ class LLM_wrapper:
                 content = re.sub(r"\s*```$", "", content)
 
                 parsed = json.loads(content)
-
-                #parsed = json.loads(completion.choices[0].message.content)
-
-                print(f'Parsed: {parsed}\n')
-                print(f'Completion: {completion}\n\n')
 
                 return parsed, completion, format_class_type
 
