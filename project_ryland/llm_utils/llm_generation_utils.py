@@ -526,10 +526,18 @@ class LLM_wrapper:
                 print('OPENAI INTEGRATED')
                 schema_json = format_class.model_json_schema()
 
+                system_prompt = f"""
+                You are a strict JSON generator.
+
+                IMPORTANT: Return ONLY valid JSON.
+                Do not include markdown, explanations, or code fences.
+
+                The output MUST match this schema:
+                {schema_json}
+                """
+
                 fallback_prompt = (
-                    f"{prompt}\n\n"
-                    f"IMPORTANT: Return ONLY valid JSON.\n"
-                    f"The JSON must match this schema:\n{schema_json}"
+                    f"{prompt}\n\n{system_prompt}"
                 )
 
                 input_text = f'\n-------------------\nINPUT TEXT:\n{input_text}'
@@ -554,9 +562,23 @@ class LLM_wrapper:
 
                 format_class_type = 'integrated'
 
+
+
                 print(f'Raw Parsed: {completion.choices[0].message.content}\n')
 
-                parsed = json.loads(completion.choices[0].message.content)
+                import re
+                import json
+
+                content = completion.choices[0].message.content
+
+                # Remove ```json ... ``` wrappers if present
+                content = re.sub(r"^```json\s*", "", content.strip())
+                content = re.sub(r"^```\s*", "", content)
+                content = re.sub(r"\s*```$", "", content)
+
+                parsed = json.loads(content)
+
+                #parsed = json.loads(completion.choices[0].message.content)
 
                 print(f'Parsed: {parsed}\n')
                 print(f'Completion: {completion}\n\n')
