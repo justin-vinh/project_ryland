@@ -523,9 +523,6 @@ class LLM_wrapper:
                 # FALLBACK: Databricks-safe JSON prompt injection
                 schema_json = format_class.model_json_schema()
 
-                print(f'[INFO] Using fallback prompt (prompt and schema '
-                      f'integrated together)')
-
                 fallback_prompt = (
                     f"{prompt}\n\n"
                     f"IMPORTANT: Return ONLY valid JSON.\n"
@@ -550,6 +547,10 @@ class LLM_wrapper:
                 format_class_type = 'integrated'
 
                 parsed = json.loads(completion.choices[0].message.content)
+
+                print(f'Parsed: {parsed}\n')
+                print(f'Completion: {completion}\n\n')
+
                 return parsed, completion, format_class_type
 
         # Handle various errors
@@ -758,7 +759,9 @@ class LLM_wrapper:
         logging.info(f'[INFO] Project Ryland:           v{__version__}')
         logging.info(f'[INFO] Unique Run ID:            {run_id}')
         logging.info(f'[INFO] Loading LLM model:        {self.model_name}')
-        logging.info(f'[INFO] Loading input data:       {input_file_path}')
+        if input_df is not None:
+            logging.info(f'[INFO] Loading input data:       Directly loaded DataFrame')
+        else: logging.info(f'[INFO] Loading input data:       {input_file_path}')
         logging.info(f'[INFO] Loading prompt struct:    {format_class.__name__}')
 
         print(f'[START] New LLM generation run starting...')
