@@ -444,11 +444,12 @@ class LLM_wrapper:
 
         # Sets up a parameter set for the chat completion response
         # Will add to this set based on API type or model type
-        chat_response_params = {
-            'model': self.model_name,
-            'messages': [{"role": "system", "content": prompt},
-                        {"role": "user", "content": input_text}],
-        }
+        if format_class_type != 'integrated':
+            chat_response_params = {
+                'model': self.model_name,
+                'messages': [{"role": "system", "content": prompt},
+                            {"role": "user", "content": input_text}],
+            }
 
         # Sets the temperature to 0 if using any model other than gpt-5
         if 'gpt-5' not in self.model_name:
@@ -529,12 +530,14 @@ class LLM_wrapper:
                     f"The JSON must match this schema:\n{schema_json}"
                 )
 
-                chat_response_params['messages'] = [
-                    {"role": "system",
-                     "content": "You are a structured extraction system."},
-                    {"role": "user", "content": fallback_prompt},
-                    {"role": "user", "content": input_text},
-                ]
+                print(fallback_prompt)
+                print(f'{input_text}\n')
+
+                chat_response_params = {
+                    'model': self.model_name,
+                    'messages': [{"role": "system", "content": fallback_prompt},
+                                 {"role": "user", "content": input_text}],
+                }
 
                 # remove unsupported fields if they exist
                 chat_response_params.pop('tools', None)
