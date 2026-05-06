@@ -3,6 +3,12 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v.2.10.0 (May 5, 2026)
+- added the ability for the OpenAI API to directly integrate a json 
+  structure into the prompt given a pydantic basemodel
+  - This allows us to use a single type of prompt structure for all prompts 
+    regardless of OpenAI API types or Azure APIs
+
 ### v2.9.0 (May 5, 2026)
 - added the ability to inject the prompt structure directly into the prompt 
   if the API does not accept pydantic model. This is handled automatically.

@@ -853,7 +853,7 @@ class LLM_wrapper:
         print(f'[INFO] Starting LLM API call ({now})')
         cost_tracker = LLMCostTracker(self.model_name)
 
-        # Test the waters - figure out which gate to open for the OpenAI API type
+        # Test the waters: Figure out which gate to open for the OpenAI API type
         if self.API_TYPE =='OPENAI':
             test_text = 'This is a test'
             test_prompt = 'Give the first word in the text'
@@ -862,7 +862,8 @@ class LLM_wrapper:
             response, completion, format_class_type = self.openai_chat_completion_response(
                 test_prompt,
                 test_text,
-                test_struct
+                test_struct,
+                format_class_type='json'
             )
             cost_tracker.update_cost(completion)
         else:
