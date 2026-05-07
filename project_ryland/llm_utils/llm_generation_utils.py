@@ -885,7 +885,7 @@ class LLM_wrapper:
             format_class_type = 'pydantic'
 
         print(f'[INFO] This API is using "{format_class_type}" prompt structure\n')
-        logging.info(f'[INFO] Prompt Structure Type:    {number_sampled}')
+        logging.info(f'[INFO] Prompt Structure Type:    {format_class_type}')
 
         # Sets up the progress bar
         bar = tqdm(unprocessed_df.iterrows(),
