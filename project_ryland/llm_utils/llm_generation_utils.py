@@ -6,7 +6,7 @@ Institution:    Dana-Farber Cancer Institute
 Working Groups: Lindvall & Rhee Labs
 Parent Package: Project Ryland
 Creation Date:  2025.10.06
-Last Modified:  2026.02.19
+Last Modified:  2026.05.12
 
 Purpose:
 Contain the functions necessary to pull the proper LLM prompt and
@@ -35,6 +35,7 @@ from openai import AzureOpenAI, OpenAI, RateLimitError
 from pydantic import ValidationError
 from scipy.cluster.hierarchy import complete
 from tqdm import tqdm
+from json_repair import repair_json
 
 from .llm_config import llm_model_meta
 from .llm_tracker import update_run_summary
@@ -561,7 +562,12 @@ class LLM_wrapper:
                 content = re.sub(r"^```\s*", "", content)
                 content = re.sub(r"\s*```$", "", content)
 
-                parsed = json.loads(content)
+                try:
+                    parsed = json.loads(content)
+
+                except json.JSONDecodeError:
+                    repaired = repair_json(content)
+                    parsed = json.loads(repaired)
 
                 return parsed, completion, format_class_type
 
@@ -774,7 +780,6 @@ class LLM_wrapper:
         if input_df is not None:
             logging.info(f'[INFO] Loading input data:       Directly loaded DataFrame')
         else: logging.info(f'[INFO] Loading input data:       {input_file_path}')
-        logging.info(f'[INFO] Loading prompt struct:    {format_class.__name__}')
 
         print(f'[START] New LLM generation run starting...')
         print(f'[INFO] Project Ryland:      v{__version__}')
@@ -817,6 +822,7 @@ class LLM_wrapper:
 
         # Log the loaded prompt name
         logging.info(f'[INFO] Loading prompt:           {prompt_to_get}\n')
+        logging.info(f'[INFO] Loading prompt struct:    {format_class.__name__}')
 
         # Check for existing checkpoint files to resume from, else start anew
         # Work only on rows without a generation yet
@@ -884,7 +890,7 @@ class LLM_wrapper:
         else:
             format_class_type = 'pydantic'
 
-        print(f'[INFO] This API is using "{format_class_type}" prompt structure\n')
+        print(f'[INFO] This prompt is using "{format_class_type}" prompt structure\n')
         logging.info(f'[INFO] Prompt Structure Type:    {format_class_type}')
 
         # Sets up the progress bar

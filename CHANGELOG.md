@@ -3,7 +3,11 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
-### v.2.10.0 (May 5, 2026)
+### v2.11.0 (May 12, 2026)
+- Added json-repair to repair malformed json outputs, especially from claude 
+  models
+
+### v2.10.0 (May 5, 2026)
 - added the ability for the OpenAI API to directly integrate a json 
   structure into the prompt given a pydantic basemodel
   - This allows us to use a single type of prompt structure for all prompts 
