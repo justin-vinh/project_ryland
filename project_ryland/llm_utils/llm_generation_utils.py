@@ -973,65 +973,64 @@ class LLM_wrapper:
 
             # Handle exceptions during the LLM run
             except Exception as e:
-            #     # Detect a lost connection / VPN drop / endpoint being
-            #     # unreachable. When this happens, EVERY remaining row will
-            #     # fail with the same error, so we must abort the run rather
-            #     # than silently marking all rows as None and writing a
-            #     # "final" output file as if the run succeeded.
-            #     error_msg = str(e).lower()
-            #     fatal_connection_signals = (
-            #         "public access is disabled",
-            #         "configure private endpoint",
-            #         "connection error",
-            #         "connection aborted",
-            #         "connection reset",
-            #         "failed to establish",
-            #         "max retries exceeded",
-            #         "name or service not known",
-            #         "temporary failure in name resolution",
-            #         "getaddrinfo failed",
-            #         "nodename nor servname",
-            #         "403",
-            #         "cannot unpack non-iterable nonetype object"
-            #     )
-            #     is_fatal_connection = (
-            #             isinstance(
-            #                 e,
-            #                 (
-            #                     openai.APIConnectionError,
-            #                     openai.APITimeoutError,
-            #                     openai.AuthenticationError,
-            #                     openai.PermissionDeniedError,
-            #                 ),
-            #             )
-            #             or any(
-            #         sig in error_msg for sig in fatal_connection_signals)
-            #     )
-            #
-            #     if is_fatal_connection:
-            #         tqdm.write(
-            #             f'\n[FATAL] Row {idx}: connection/endpoint failure '
-            #             f'detected (likely VPN drop):\n{e}\n'
-            #             f'[FATAL] Aborting run. NO final output will be written. '
-            #             f'Latest checkpoint is preserved so you can resume '
-            #             f'once the connection is restored.\n'
-            #         )
-            #         logging.error(
-            #             f'[FATAL] Row: {idx} | Type: CONNECTION_LOST | Error: {e}'
-            #         )
-            #         logging.error(
-            #             '[FATAL] Aborting run without writing final output. '
-            #             'Resume from the latest checkpoint after reconnecting.'
-            #         )
-            #
-            #         # Save a checkpoint of progress so far (this row left unprocessed)
-            #         self._atomic_save_csv(df, checkpoint_path)
-            #
-            #         raise RuntimeError(
-            #             f'Run aborted at row {idx} due to a connection/endpoint '
-            #             f'failure (likely VPN drop). Final output was NOT written. '
-            #             f'Resume from checkpoint: {checkpoint_path}'
-            #         ) from e
+                # Detect a lost connection / VPN drop / endpoint being
+                # unreachable. When this happens, EVERY remaining row will
+                # fail with the same error, so we must abort the run rather
+                # than silently marking all rows as None and writing a
+                # "final" output file as if the run succeeded.
+                error_msg = str(e).lower()
+                fatal_connection_signals = (
+                    "public access is disabled",
+                    "configure private endpoint",
+                    "connection error",
+                    "connection aborted",
+                    "connection reset",
+                    "failed to establish",
+                    "max retries exceeded",
+                    "name or service not known",
+                    "temporary failure in name resolution",
+                    "getaddrinfo failed",
+                    "nodename nor servname",
+                    "403",
+                )
+                is_fatal_connection = (
+                        isinstance(
+                            e,
+                            (
+                                openai.APIConnectionError,
+                                openai.APITimeoutError,
+                                openai.AuthenticationError,
+                                openai.PermissionDeniedError,
+                            ),
+                        )
+                        or any(
+                    sig in error_msg for sig in fatal_connection_signals)
+                )
+
+                if is_fatal_connection:
+                    tqdm.write(
+                        f'\n[FATAL] Row {idx}: connection/endpoint failure '
+                        f'detected (likely VPN drop):\n{e}\n'
+                        f'[FATAL] Aborting run. NO final output will be written. '
+                        f'Latest checkpoint is preserved so you can resume '
+                        f'once the connection is restored.\n'
+                    )
+                    logging.error(
+                        f'[FATAL] Row: {idx} | Type: CONNECTION_LOST | Error: {e}'
+                    )
+                    logging.error(
+                        '[FATAL] Aborting run without writing final output. '
+                        'Resume from the latest checkpoint after reconnecting.'
+                    )
+
+                    # Save a checkpoint of progress so far (this row left unprocessed)
+                    self._atomic_save_csv(df, checkpoint_path)
+
+                    raise RuntimeError(
+                        f'Run aborted at row {idx} due to a connection/endpoint '
+                        f'failure (likely VPN drop). Final output was NOT written. '
+                        f'Resume from checkpoint: {checkpoint_path}'
+                    ) from e
 
                 df.at[idx, 'generation'] = None
 
