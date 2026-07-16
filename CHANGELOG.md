@@ -3,6 +3,14 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.12.0 (July 15, 2026)
+- Added a run_tag parameter to process_text so that we can descriptions to 
+  the run as needed. This is scraped by the llm_tracker and added to the csv 
+  output
+- Add a new handler to handle when the VPN drops. New behavior: now the run 
+  won't rapid autocomplete when the VPN drops but will cut the run to be 
+  continued
+
 ### v2.11.0 (May 12, 2026)
 - Added json-repair to repair malformed json outputs, especially from claude 
   models

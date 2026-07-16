@@ -661,6 +661,7 @@ class LLM_wrapper:
         prompt_to_get: str = None,
         prompt_text: str = None,
         user_prompt_vars = None,
+        run_tag: str = None,
 
         sample_mode: bool = False,
         number_sampled: int = 10,
@@ -775,6 +776,8 @@ class LLM_wrapper:
 
         logging.info(f'[START] New LLM generation run starting...')
         logging.info(f'[INFO] Project Ryland:           v{__version__}')
+        if run_id is not None:
+            logging.info(f'[INFO] Run tag:                  {run_tag}')
         logging.info(f'[INFO] Unique Run ID:            {run_id}')
         logging.info(f'[INFO] Loading LLM model:        {self.model_name}')
         if input_df is not None:
@@ -926,6 +929,66 @@ class LLM_wrapper:
 
             # Handle exceptions during the LLM run
             except Exception as e:
+                # Detect a lost connection / VPN drop / endpoint being
+                # unreachable. When this happens, EVERY remaining row will
+                # fail with the same error, so we must abort the run rather
+                # than silently marking all rows as None and writing a
+                # "final" output file as if the run succeeded.
+                error_msg = str(e).lower()
+                fatal_connection_signals = (
+                    "public access is disabled",
+                    "configure private endpoint",
+                    "connection error",
+                    "connection aborted",
+                    "connection reset",
+                    "failed to establish",
+                    "max retries exceeded",
+                    "name or service not known",
+                    "temporary failure in name resolution",
+                    "getaddrinfo failed",
+                    "nodename nor servname",
+                    "403",
+                )
+                is_fatal_connection = (
+                        isinstance(
+                            e,
+                            (
+                                openai.APIConnectionError,
+                                openai.APITimeoutError,
+                                openai.AuthenticationError,
+                                openai.PermissionDeniedError,
+                            ),
+                        )
+                        or any(
+                    sig in error_msg for sig in fatal_connection_signals)
+                )
+
+                if is_fatal_connection:
+                    tqdm.write(
+                        f'\n[FATAL] Row {idx}: connection/endpoint failure '
+                        f'detected (likely VPN drop):\n{e}\n'
+                        f'[FATAL] Aborting run. NO final output will be written. '
+                        f'Latest checkpoint is preserved so you can resume '
+                        f'once the connection is restored.\n'
+                    )
+                    logging.error(
+                        f'[FATAL] Row: {idx} | Type: CONNECTION_LOST | Error: {e}'
+                    )
+                    logging.error(
+                        '[FATAL] Aborting run without writing final output. '
+                        'Resume from the latest checkpoint after reconnecting.'
+                    )
+
+                    # Save a checkpoint of progress so far (this row left unprocessed)
+                    with open(checkpoint_path, 'w') as f:
+                        df.to_csv(f, index=False)
+
+                    raise RuntimeError(
+                        f'Run aborted at row {idx} due to a connection/endpoint '
+                        f'failure (likely VPN drop). Final output was NOT written. '
+                        f'Resume from checkpoint: {checkpoint_path}'
+                    ) from e
+
                 df.at[idx, 'generation'] = None
 
                 # Print out the error

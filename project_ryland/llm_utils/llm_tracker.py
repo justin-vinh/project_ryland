@@ -69,8 +69,13 @@ def _parse_completed_runs(log_text: str) -> List[Dict]:
         m_dur = re.search(r"Duration:\s*([\d.]+)\s*min", block)
         duration_min = float(m_dur.group(1)) if m_dur else None
 
+        # RUN TAG (may be absent in legacy logs)
+        m_tag = re.search(r"Run tag:\s+(.+)", block)
+        run_tag = m_tag.group(1).strip() if m_tag else None
+
         runs.append({
             "RUN_ID": run_id,
+            "RUN_TAG": run_tag,
             "STATUS": "SUCCESS",
             "DATE": date_fmt,
             "MODEL": model,
@@ -101,6 +106,7 @@ def _parse_completed_runs_v2(log_text: str) -> List[Dict]:
     - Cost = latest cumulative or final cost
     - Detects resumed runs
     - Scrapes prompt struct and prompt name
+    - Scrapes run tag
     """
 
     runs = []
@@ -121,6 +127,14 @@ def _parse_completed_runs_v2(log_text: str) -> List[Dict]:
         run_id = m_run.group(1)
         date = run_id[:8]
         date_fmt = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
+
+        # -------------------------
+        # RUN TAG (optional; may be logged as "None")
+        # -------------------------
+        m_tag = re.search(r"Run tag:\s+(.+)", block)
+        run_tag = m_tag.group(1).strip() if m_tag else None
+        if run_tag in ("None", ""):
+            run_tag = None
 
         # -------------------------
         # STATUS
@@ -210,6 +224,7 @@ def _parse_completed_runs_v2(log_text: str) -> List[Dict]:
 
         runs.append({
             "RUN_ID": run_id,
+            "RUN_TAG": run_tag,
             "STATUS": status,
             "DATE": date_fmt,
             "MODEL": model,
@@ -273,6 +288,7 @@ def update_run_summary(
     # -------------------------
     cols_order = [
         "RUN_ID",
+        "RUN_TAG",
         "STATUS",
         "DATE",
         "MODEL",
