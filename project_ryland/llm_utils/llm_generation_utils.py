@@ -948,6 +948,7 @@ class LLM_wrapper:
                     "getaddrinfo failed",
                     "nodename nor servname",
                     "403",
+                    "cannot unpack non-iterable NoneType object"
                 )
                 is_fatal_connection = (
                         isinstance(
