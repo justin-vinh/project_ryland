@@ -3,6 +3,12 @@
 ### Lindvall Lab | Dana-Farber Cancer Institute | Contact: justin_vinh@dfci.harvard.edu
 ##
 
+### v2.13.0 (July 16, 2026)
+- Fixed a serious bug that would erase generations if the run is canceled 
+  mid-write. A new function atomic_save now keeps a copy in a tmp file 
+  before overwriting
+
+
 ### v2.12.0 (July 15, 2026)
 - Added a run_tag parameter to process_text so that we can descriptions to 
   the run as needed. This is scraped by the llm_tracker and added to the csv 

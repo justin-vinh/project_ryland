@@ -590,6 +590,50 @@ class LLM_wrapper:
 
     # Set up data handling functions
     # -------------------------------------------------------------------------
+    @staticmethod
+    def _atomic_save_csv(df: pd.DataFrame, path: str) -> None:
+        """
+        Write ``df`` to ``path`` atomically.
+
+        A plain ``open(path, 'w')`` truncates the target file to zero bytes
+        *before* the new contents are written, so an interrupt (Ctrl-C, crash,
+        VPN-triggered abort) landing mid-write leaves a truncated / empty
+        checkpoint and silently loses already-processed rows.
+
+        Instead we write to a temporary file in the SAME directory, flush +
+        fsync it to physical disk, then ``os.replace`` it onto the target.
+        ``os.replace`` is atomic on POSIX and Windows: the checkpoint on disk
+        is always either the complete previous version or the complete new
+        version, never a half-written one. An interrupt mid-write just leaves a
+        stray ``.tmp`` file and the real checkpoint is untouched.
+        """
+        import tempfile
+
+        directory = os.path.dirname(path) or '.'
+        os.makedirs(directory, exist_ok=True)
+
+        # Same directory so os.replace is a same-filesystem (atomic) rename.
+        fd, tmp_path = tempfile.mkstemp(
+            dir=directory,
+            prefix='.tmp_checkpoint_',
+            suffix='.csv'
+        )
+        try:
+            with os.fdopen(fd, 'w', newline='') as f:
+                df.to_csv(f, index=False)
+                f.flush()
+                os.fsync(f.fileno())  # force OS buffers to disk
+            os.replace(tmp_path, path)  # atomic swap
+        except BaseException:
+            # Clean up temp file on any failure/interrupt, then re-raise
+            # (BaseException also covers Ctrl-C / KeyboardInterrupt).
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except OSError:
+                pass
+            raise
+
     @ staticmethod
     def load_input_file(
         input_file: str,
@@ -981,8 +1025,7 @@ class LLM_wrapper:
                     )
 
                     # Save a checkpoint of progress so far (this row left unprocessed)
-                    with open(checkpoint_path, 'w') as f:
-                        df.to_csv(f, index=False)
+                    self._atomic_save_csv(df, checkpoint_path)
 
                     raise RuntimeError(
                         f'Run aborted at row {idx} due to a connection/endpoint '
@@ -1010,8 +1053,8 @@ class LLM_wrapper:
 
             # Save checkpoints every X rows (user-specified, default=10 rows)
             if (i + 1) % save_every == 0 or i == len(unprocessed_df) - 1:
-                with open(checkpoint_path, 'w') as f:
-                    df.to_csv(f, index=False)
+                self._atomic_save_csv(df, checkpoint_path)
+
                 # now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 duration = (datetime.now() - start_time)
                 duration_minutes = duration.total_seconds() / 60
@@ -1059,7 +1102,7 @@ class LLM_wrapper:
                     df = pd.concat([df, flattened_df[new_cols]], axis=1)
 
         # Save the final LLM output
-        df.to_csv(final_output_path, index=False)
+        self._atomic_save_csv(df, final_output_path)
 
         # Log the final cost of LLM generation in the log file
         logging.info(f'[SUCCESS] Final cost:            '
